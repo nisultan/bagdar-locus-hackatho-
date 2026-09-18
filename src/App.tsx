@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import type React from 'react';
+import { ThemeToggle } from './components/ThemeToggle';
 import { Icon } from './components/ui';
 import { go, useRoute } from './router';
 import { Compare } from './screens/Compare';
@@ -41,19 +43,30 @@ export default function App() {
         <a className="logo" href="#/">
           <span className="logo-mark" aria-hidden>
             <svg viewBox="0 0 32 32" width="28" height="28">
-              <circle cx="7" cy="25" r="4" fill="currentColor" />
-              <path d="M7 21V14a6 6 0 016-6h6" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-              <path d="M17 4l5 4-5 4" stroke="var(--accent)" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              {/* точка старта — пульсирует, как «вы здесь» на карте */}
+              <circle className="logo-pulse" cx="7" cy="25" r="4" fill="currentColor" />
+              <circle className="logo-dot" cx="7" cy="25" r="4" fill="currentColor" />
+              {/* сам маршрут — рисуется штрихом при загрузке и при наведении */}
+              <path className="logo-path" d="M7 21V14a6 6 0 016-6h6" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+              {/* стрелка-цель — доезжает до конца пути */}
+              <path className="logo-arrow" d="M17 4l5 4-5 4" stroke="var(--accent)" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          UniPath
+          <span className="logo-word">
+            {'Bagdar'.split('').map((c, i) => (
+              <span key={i} style={{ '--i': i } as React.CSSProperties}>{c}</span>
+            ))}
+          </span>
         </a>
-        {state.profileDone && derived.next && stage !== 'next' && (
-          <a className="topbar-next" href="#/next">
-            <Icon name="flag" size={16} />
-            <span className="topbar-next-text">Шаг: {derived.next.title}</span>
-          </a>
-        )}
+        <div className="topbar-tools">
+          {state.profileDone && derived.next && stage !== 'next' && (
+            <a className="topbar-next" href="#/next">
+              <Icon name="flag" size={16} />
+              <span className="topbar-next-text">Шаг: {derived.next.title}</span>
+            </a>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
       <nav className="stepper" aria-label="Этапы маршрута">
@@ -94,8 +107,9 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        UniPath · рекомендации строятся по правилам и демо-данным ({new Date().getFullYear()}). Сервис не гарантирует поступление —
-        всегда проверяйте условия на официальных сайтах вузов.
+        <b>Bagdar</b> — от казахского «бағдар», направление. Рекомендации строятся по прозрачным правилам, стоимость и дедлайны
+        сверены с сайтами вузов ({new Date().getFullYear()}). Сервис не гарантирует поступление — всегда проверяйте условия
+        на официальных сайтах.
       </footer>
     </div>
   );
