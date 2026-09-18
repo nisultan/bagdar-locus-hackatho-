@@ -958,3 +958,103 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 .sidebar-progress-head { display: flex; justify-content: space-between; color: var(--muted); }
 
 .sidebar-tools { display: flex; align-items: center; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); }
+
+/* ============ Сворачивание сайдбара ============ */
+@media (min-width: 1080px) {
+  /* grid-template-columns анимируется, поэтому ширина едет плавно,
+     а контент справа сам занимает освободившееся место. */
+  .app { transition: grid-template-columns 0.38s cubic-bezier(0.22, 1, 0.36, 1); }
+  .app-collapsed { grid-template-columns: 76px 1fr; }
+  .app-collapsed .rail-right { right: max(8px, calc((100vw - 76px - 1040px) / 2 - 96px)); }
+}
+
+.sidebar-head { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+
+.sidebar-toggle {
+  display: grid; place-items: center; width: 34px; height: 34px; flex: none;
+  border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface);
+  color: var(--muted); cursor: pointer; padding: 0;
+  box-shadow: 0 2px 0 var(--line);
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.sidebar-toggle:hover { color: var(--primary); border-color: var(--primary); }
+.sidebar-toggle:active { transform: translateY(2px); box-shadow: 0 0 0 var(--line); }
+
+/* Свёрнутое состояние живёт только на ширинах, где есть сайдбар: класс
+   app-collapsed сохраняется между визитами и иначе ломал бы мобильную шапку. */
+@media (min-width: 1080px) {
+  /* --- Свёрнутое состояние --- */
+  .app-collapsed .sidebar { padding-left: 12px; padding-right: 12px; }
+  .app-collapsed .sidebar-head { justify-content: center; }
+  .app-collapsed .logo-word,
+  .app-collapsed .sidebar-label,
+  .app-collapsed .sidebar-next .small,
+  .app-collapsed .sidebar-progress-head,
+  .app-collapsed .sidebar-tools .small { display: none; }
+
+  .app-collapsed .sidebar-logo { padding: 4px 0; }
+  .app-collapsed .sidebar-stop button { justify-content: center; padding: 7px 0; }
+  .app-collapsed .sidebar-route::before,
+  .app-collapsed .sidebar-route::after { left: 50%; transform: translateX(-50%); }
+
+  .app-collapsed .sidebar-next { align-items: center; text-align: center; padding: 10px 8px; }
+  .app-collapsed .sidebar-next b {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; font-size: 12px;
+  }
+  .app-collapsed .sidebar-tools { justify-content: center; }
+
+  /* В свёрнутом виде подпись этапа всплывает подсказкой у курсора */
+  .sidebar-tip {
+    position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%) translateX(-6px);
+    white-space: nowrap; padding: 6px 12px; border-radius: 8px; font-size: 14px;
+    background: var(--ink); color: var(--bg); pointer-events: none;
+    opacity: 0; transition: opacity 0.18s ease, transform 0.18s ease; z-index: 30;
+  }
+  .sidebar-stop button:hover .sidebar-tip,
+  .sidebar-stop button:focus-visible .sidebar-tip { opacity: 1; transform: translateY(-50%) translateX(0); }
+
+  /* Кнопка-стрелка разворота смотрит в сторону действия */
+  .app-collapsed .sidebar-toggle svg { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app { transition: none; }
+}
+
+/* ============ Переход с отрисовкой маршрута ============ */
+.route-loader {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+  animation: rl-in 0.25s ease both;
+}
+@keyframes rl-in { from { opacity: 0; } }
+
+.route-loader-card {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 34px 40px; text-align: center;
+}
+
+.route-loader-art { width: 104px; height: 104px; overflow: visible; }
+.rl-track { fill: none; stroke: var(--line); stroke-width: 4; stroke-linecap: round; }
+.rl-draw {
+  fill: none; stroke: var(--primary); stroke-width: 4; stroke-linecap: round;
+  stroke-dasharray: 190; stroke-dashoffset: 190;
+  animation: rl-draw cubic-bezier(0.45, 0, 0.3, 1) forwards;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 55%, transparent));
+}
+@keyframes rl-draw { to { stroke-dashoffset: 0; } }
+
+.rl-start { fill: var(--primary); }
+.rl-flag { fill: var(--accent); opacity: 0; animation: rl-flag 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; transform-origin: 90px 32px; }
+@keyframes rl-flag { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+
+.route-loader-title { font-size: 17px; font-weight: 600; color: var(--ink); animation: rise 0.3s ease both; }
+
+.route-loader-dots { display: flex; gap: 6px; }
+.route-loader-dots span {
+  width: 7px; height: 7px; border-radius: 999px; background: var(--line);
+  transition: background 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.route-loader-dots .is-on { background: var(--primary); transform: scale(1.25); }

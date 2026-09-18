@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { CountUp, Reveal, useTilt } from '../components/motion';
+import { RouteLoader } from '../components/RouteLoader';
 import { ScrollPath } from '../components/ScrollPath';
 import { Button, CHECKED_ON, Icon } from '../components/ui';
 import { SAMPLE_PROFILE } from '../data/options';
@@ -17,9 +19,23 @@ const COUNTRIES = new Set(PROGRAMS.map((p) => p.country)).size;
 export function Landing() {
   const { state, dispatch, derived } = useStore();
   const tilt = useTilt(9);
+  const [starting, setStarting] = useState<null | 'profile' | 'sample'>(null);
 
   return (
     <div className="landing">
+      {starting === 'profile' && (
+        <RouteLoader steps={[{ label: 'Начинаем маршрут', ms: 850 }]} onDone={() => go('profile')} />
+      )}
+      {starting === 'sample' && (
+        <RouteLoader
+          steps={[
+            { label: 'Берём профиль Алии, 11 класс', ms: 550 },
+            { label: 'Подбираем программы под её условия', ms: 700 },
+          ]}
+          onDone={() => go('diagnosis')}
+        />
+      )}
+
       <ScrollPath />
 
       <section className="hero">
@@ -42,12 +58,12 @@ export function Landing() {
               </>
             ) : (
               <>
-                <Button iconRight="arrow" onClick={() => go('profile')}>Построить маршрут</Button>
+                <Button iconRight="arrow" onClick={() => setStarting('profile')}>Построить маршрут</Button>
                 <Button
                   variant="secondary"
                   onClick={() => {
                     dispatch({ type: 'saveProfile', profile: SAMPLE_PROFILE });
-                    go('diagnosis');
+                    setStarting('sample');
                   }}
                 >
                   Посмотреть на примере

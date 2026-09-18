@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RouteLoader } from '../components/RouteLoader';
 import { Button, Chip, Icon } from '../components/ui';
 import {
   ACHIEVEMENT_LABELS, COUNTRY_FLAG, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_EMOJI, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
@@ -37,14 +38,18 @@ export function ProfileWizard({ step }: { step: number }) {
   const toggle = <T,>(list: T[], v: T, max: number) =>
     list.includes(v) ? list.filter((x) => x !== v) : list.length >= max ? list : [...list, v];
 
+  const [building, setBuilding] = useState(false);
+
   const next = () => {
     const e = validate(p, s);
     setErrors(e);
     if (Object.keys(e).length) return;
     if (s < TITLES.length) go(`profile/${s + 1}`);
     else {
+      // Профиль сохраняем сразу: оверлей показывает то, что уже произошло,
+      // а не изображает работу, которой нет.
       dispatch({ type: 'saveProfile', profile: p });
-      go(editing ? 'recs' : 'diagnosis');
+      setBuilding(true);
     }
   };
 
@@ -63,6 +68,17 @@ export function ProfileWizard({ step }: { step: number }) {
 
   return (
     <div className="wizard">
+      {building && (
+        <RouteLoader
+          steps={[
+            { label: 'Профиль сохранён', ms: 500 },
+            { label: 'Подбираем программы под ваши условия', ms: 650 },
+            { label: 'Собираем план по месяцам', ms: 550 },
+          ]}
+          onDone={() => go(editing ? 'recs' : 'diagnosis')}
+        />
+      )}
+
       <div className="wizard-progress">
         <div className="wizard-meta">
           <span>Вопрос {s} из {TITLES.length}</span>

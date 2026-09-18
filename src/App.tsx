@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type React from 'react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Icon } from './components/ui';
@@ -12,6 +12,8 @@ import { Recommendations } from './screens/Recommendations';
 import { RoadmapScreen } from './screens/Roadmap';
 import { Sidebar } from './components/Sidebar';
 import { STAGES } from './stages';
+
+const SIDEBAR_KEY = 'bagdar.sidebar';
 import { useStore } from './state/store';
 
 
@@ -30,9 +32,29 @@ export default function App() {
 
   const current = STAGES.findIndex((s) => s.id === stage);
 
+  // Свёрнутость сайдбара запоминаем: это осознанный выбор, а не настройка на один визит.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(SIDEBAR_KEY, c ? '0' : '1');
+      } catch {
+        /* приватный режим — выбор просто не переживёт перезагрузку */
+      }
+      return !c;
+    });
+  };
+
   return (
-    <div className="app">
-      <Sidebar stage={stage} />
+    <div className={`app${collapsed ? ' app-collapsed' : ''}`}>
+      <Sidebar stage={stage} collapsed={collapsed} onToggle={toggleSidebar} />
 
       <div className="app-body">
       <header className="topbar">

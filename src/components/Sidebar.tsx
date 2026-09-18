@@ -10,14 +10,23 @@ import { Icon } from './ui';
  * недоступные заблокированы до заполнения анкеты. На узких экранах скрыт —
  * там работает горизонтальный степпер в шапке.
  */
-export function Sidebar({ stage }: { stage: string }) {
+export function Sidebar({
+  stage,
+  collapsed,
+  onToggle,
+}: {
+  stage: string;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const { state, derived } = useStore();
   const current = STAGES.findIndex((s) => s.id === stage);
   const { done, total } = derived.progress;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Навигация по маршруту">
+      <div className="sidebar-head">
       <a className="logo sidebar-logo" href="#/">
         <span className="logo-mark" aria-hidden>
           <svg viewBox="0 0 32 32" width="28" height="28">
@@ -33,6 +42,18 @@ export function Sidebar({ stage }: { stage: string }) {
           ))}
         </span>
       </a>
+
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+          aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+        >
+          <Icon name={collapsed ? 'arrow' : 'back'} size={18} />
+        </button>
+      </div>
 
       <nav className="sidebar-nav" aria-label="Этапы маршрута">
         <ol
@@ -56,6 +77,7 @@ export function Sidebar({ stage }: { stage: string }) {
                     {isDone ? <Icon name="check" size={13} /> : locked ? <Icon name="lock" size={12} /> : i + 1}
                   </span>
                   <span className="sidebar-label">{s.label}</span>
+                  {collapsed && <span className="sidebar-tip">{s.label}</span>}
                 </button>
               </li>
             );
