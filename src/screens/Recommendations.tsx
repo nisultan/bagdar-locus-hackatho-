@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { fetchAdvice, type AdviceResult } from '../ai';
-import { BandBadge, Button, Chip, DemoNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
+import { BandBadge, Button, Chip, EstimateNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
 import { COUNTRY_FLAG, COUNTRY_LABELS, FIELD_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { plural, usd } from '../engine/format';
@@ -163,7 +163,7 @@ function RecCard({ r, rank, unlocked = false }: { r: Recommendation; rank: numbe
           <span className="small muted">Подача</span>
           <b className="small">{p.deadline.label}</b>
         </div>
-        <DemoNote />
+        <EstimateNote />
         <SourceLink href={p.sourceUrl} label="Проверить на сайте вуза" strong />
       </div>
 

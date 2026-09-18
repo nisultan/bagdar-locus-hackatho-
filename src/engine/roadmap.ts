@@ -52,7 +52,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       category: 'deadline',
       due: cycleDate(prog.deadline.month, intake),
       sourceUrl: prog.sourceUrl,
-      demo: true,
+      estimated: true,
       relatedProgramId: prog.id,
     });
   }
@@ -73,7 +73,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       category: 'exam',
       due: addMonths(nowIso, 1),
       sourceUrl: SOURCES.unt,
-      demo: false,
+      estimated: false,
     });
     tasks.push({
       id: 'unt-main',
@@ -82,7 +82,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       category: 'exam',
       due: isoMonth(intake, 5),
       sourceUrl: SOURCES.unt,
-      demo: true,
+      estimated: true,
     });
     tasks.push({
       id: 'grant-contest',
@@ -91,7 +91,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       category: 'deadline',
       due: isoMonth(intake, 7),
       sourceUrl: SOURCES.grants,
-      demo: true,
+      estimated: true,
     });
   }
 
@@ -106,7 +106,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
         category: 'exam',
         due: addMonths(examBy, -3),
         sourceUrl: SOURCES.ielts,
-        demo: false,
+        estimated: false,
       });
       tasks.push({
         id: 'ielts-exam',
@@ -115,7 +115,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
         category: 'exam',
         due: examBy,
         sourceUrl: SOURCES.ielts,
-        demo: false,
+        estimated: false,
       });
     }
   }
@@ -128,7 +128,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       category: 'exam',
       due: addMonths(earliestAbroad ?? earliest, -3),
       sourceUrl: SOURCES.sat,
-      demo: false,
+      estimated: false,
     });
   }
 
@@ -140,7 +140,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
     why: 'Нужен почти для всех заявок; для зарубежных вузов — с нотариальным переводом.',
     category: 'document',
     due: addMonths(docsBy, -1),
-    demo: false,
+    estimated: false,
   });
   const foreign = shortlist.filter((s) => s.country !== 'KZ');
   if (foreign.length > 0) {
@@ -150,7 +150,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       why: `Для учёбы за рубежом (${[...new Set(foreign.map((a) => COUNTRY_LABELS[a.country]))].join(', ')}) паспорт должен действовать весь период подачи и визы.`,
       category: 'document',
       due: addMonths(nowIso, 1),
-      demo: false,
+      estimated: false,
     });
   }
   if (abroad.length > 0) {
@@ -160,7 +160,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       why: 'Объясните, почему именно эта программа и как она связана с вашими интересами. Начните с черновика — нужно 3–4 итерации.',
       category: 'document',
       due: docsBy,
-      demo: false,
+      estimated: false,
     });
     tasks.push({
       id: 'docs-recommendations',
@@ -168,7 +168,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       why: 'Учителям нужно время — попросите минимум за месяц до дедлайна.',
       category: 'document',
       due: docsBy,
-      demo: false,
+      estimated: false,
     });
   }
 
@@ -181,16 +181,16 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
       why: `Сейчас ${p.gpa.toFixed(1)}. Итоговые оценки 10–11 класса попадают в транскрипт.`,
       category: 'academic',
       due: addMonths(nowIso, 3),
-      demo: false,
+      estimated: false,
     });
   }
   tasks.push({
     id: 'shortlist-review',
     title: 'Сверить требования на официальных сайтах',
-    why: 'Данные в сервисе — демонстрационные ориентиры. Проверьте актуальные условия и даты каждой программы.',
+    why: 'Стоимость и дедлайны сверены с сайтами вузов, но условия меняются в течение цикла. Проверьте каждую программу по ссылке перед подачей.',
     category: 'academic',
     due: nowIso,
-    demo: false,
+    estimated: false,
   });
 
   // Activities by main interest
@@ -206,7 +206,7 @@ export function buildRoadmap(p: Profile, shortlist: Program[], now: Date): Roadm
   const main = p.interests[0];
   if (main) {
     const [title, why] = activity[main];
-    tasks.push({ id: `activity-${main}`, title, why, category: 'activity', due: addMonths(nowIso, 2), demo: false });
+    tasks.push({ id: `activity-${main}`, title, why, category: 'activity', due: addMonths(nowIso, 2), estimated: false });
   }
 
   // Overdue estimates become "as soon as possible"

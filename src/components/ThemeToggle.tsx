@@ -9,43 +9,71 @@ function systemMode(): Mode {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function stored(): Mode | null {
+  try {
+    const v = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
+    return v === 'light' || v === 'dark' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Переключатель темы. Пока пользователь не нажал кнопку, тема следует за системой —
- * выбор запоминается в localStorage и с этого момента побеждает системную настройку.
+ * Тема живёт в модуле, а не в компоненте: переключатель отрисован и в шапке,
+ * и в сайдбаре (на разных ширинах виден только один), и оба должны показывать
+ * одно и то же состояние, а не каждый своё.
  */
-export function ThemeToggle() {
-  const [mode, setMode] = useState<Mode>(() => {
-    const saved = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
-    return saved === 'light' || saved === 'dark' ? saved : systemMode();
+let mode: Mode = stored() ?? systemMode();
+let userChose = stored() != null;
+const listeners = new Set<(m: Mode) => void>();
+
+function setMode(next: Mode, byUser: boolean) {
+  mode = next;
+  if (byUser) {
+    userChose = true;
+    try {
+      localStorage.setItem(KEY, next);
+    } catch {
+      /* приватный режим — тема просто не переживёт перезагрузку */
+    }
+  }
+  document.documentElement.dataset.theme = next;
+  listeners.forEach((fn) => fn(next));
+}
+
+// Пока пользователь не выбрал вручную, следуем за системой.
+if (typeof window !== 'undefined') {
+  document.documentElement.dataset.theme = mode;
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!userChose) setMode(e.matches ? 'dark' : 'light', false);
   });
+}
 
+function useTheme(): [Mode, (m: Mode) => void] {
+  const [local, setLocal] = useState<Mode>(mode);
   useEffect(() => {
-    document.documentElement.dataset.theme = mode;
-  }, [mode]);
-
-  // Если пользователь ещё не выбирал вручную — реагируем на смену системной темы.
-  useEffect(() => {
-    if (localStorage.getItem(KEY)) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => setMode(mq.matches ? 'dark' : 'light');
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    listeners.add(setLocal);
+    setLocal(mode);
+    return () => {
+      listeners.delete(setLocal);
+    };
   }, []);
+  return [local, (m) => setMode(m, true)];
+}
 
-  const next = mode === 'dark' ? 'light' : 'dark';
+export function ThemeToggle() {
+  const [theme, set] = useTheme();
+  const next: Mode = theme === 'dark' ? 'light' : 'dark';
 
   return (
     <button
       type="button"
       className="theme-toggle"
-      onClick={() => {
-        localStorage.setItem(KEY, next);
-        setMode(next);
-      }}
+      onClick={() => set(next)}
       title={next === 'dark' ? 'Тёмная тема' : 'Светлая тема'}
       aria-label={next === 'dark' ? 'Включить тёмную тему' : 'Включить светлую тему'}
     >
-      <Icon name={mode === 'dark' ? 'sun' : 'moon'} size={18} />
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
     </button>
   );
 }

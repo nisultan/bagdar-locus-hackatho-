@@ -20,6 +20,7 @@ const PATHS: Record<string, string> = {
   flag: 'M5 21V4h11l-2 4 2 4H5',
   edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
   warn: 'M12 9v4M12 17h.01M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z',
+  lock: 'M7 11V8a5 5 0 0110 0v3M5 11h14v10H5z',
   sun: 'M12 4V2M12 22v-2M4 12H2M22 12h-2M6 6L4.5 4.5M19.5 19.5L18 18M18 6l1.5-1.5M4.5 19.5L6 18M12 8a4 4 0 100 8 4 4 0 000-8z',
   moon: 'M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z',
   refresh: 'M4 12a8 8 0 0114-5.3L20 9M20 4v5h-5M20 12a8 8 0 01-14 5.3L4 15M4 20v-5h5',
@@ -109,10 +110,10 @@ export function Meter({ value, max = 100, tone = 'primary' }: { value: number; m
   );
 }
 
-export function DemoNote({ children }: { children?: ReactNode }) {
+export function EstimateNote({ children }: { children?: ReactNode }) {
   return (
     <span
-      className="demo-note"
+      className="estimate-note"
       title="Стоимость пересчитана в USD и округлена, дедлайн — из цикла приёма этого года. Точные цифры смотрите на сайте вуза."
     >
       <Icon name="info" size={14} /> {children ?? 'округлённый ориентир'}

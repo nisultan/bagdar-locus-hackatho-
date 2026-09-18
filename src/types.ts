@@ -87,6 +87,6 @@ export interface RoadmapTask {
   category: TaskCategory;
   due: string; // ISO yyyy-mm-01
   sourceUrl?: string;
-  demo: boolean; // true when date is an estimate from demo data
+  estimated: boolean; // true when the date is our estimate, not a date the university published
   relatedProgramId?: string;
 }

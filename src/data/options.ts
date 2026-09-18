@@ -92,7 +92,8 @@ export const EMPTY_PROFILE: Profile = {
   priorities: ['cost'],
 };
 
-export const DEMO_PROFILE: Profile = {
+/** Готовый профиль для быстрого знакомства: реальный по структуре 11-классник из Алматы. */
+export const SAMPLE_PROFILE: Profile = {
   name: 'Алия',
   grade: '11',
   interests: ['cs', 'engineering'],

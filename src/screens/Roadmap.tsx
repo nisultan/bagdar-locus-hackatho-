@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, CATEGORY_META, DemoNote, Icon, Meter, PageHead, SourceLink } from '../components/ui';
+import { Button, CATEGORY_META, EstimateNote, Icon, Meter, PageHead, SourceLink } from '../components/ui';
 import { PROGRAMS } from '../data/programs';
 import { monthYear } from '../engine/format';
 import { go } from '../router';
@@ -95,7 +95,7 @@ export function TaskItem({ t, highlight }: { t: RoadmapTask; highlight?: boolean
         <div className="task-top">
           <span className={`cat cat-${t.category}`}><Icon name={CATEGORY_META[t.category].icon} size={14} /> {CATEGORY_META[t.category].label}</span>
           {highlight && <span className="tag tag-accent">Следующий шаг</span>}
-          {t.demo && <DemoNote>дата — ориентир</DemoNote>}
+          {t.estimated && <EstimateNote>дата — ориентир</EstimateNote>}
         </div>
         <b className="task-title">{t.title}</b>
         <p className="small muted">{t.why}</p>

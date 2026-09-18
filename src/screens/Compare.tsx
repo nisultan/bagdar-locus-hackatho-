@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BandBadge, Button, Chip, DemoNote, Icon, PageHead, SourceLink } from '../components/ui';
+import { BandBadge, Button, Chip, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
 import { COUNTRY_FLAG, COUNTRY_LABELS } from '../data/options';
 import { usd } from '../engine/format';
 import { effectiveIelts } from '../engine/recommend';
@@ -40,7 +40,7 @@ export function Compare() {
       value: (r) => [r.program.minUnt ? `ЕНТ от ~${r.program.minUnt}` : null, r.program.satRecommended ? 'SAT желателен' : null, `балл ${r.program.minGpa}+`].filter(Boolean).join(' · '),
     },
     { label: 'Как поступают', value: (r) => r.program.entrance },
-    { label: 'Подача', value: (r) => <>{r.program.deadline.label} <DemoNote /></> },
+    { label: 'Подача', value: (r) => <>{r.program.deadline.label} <EstimateNote /></> },
     { label: 'Город', value: (r) => `${COUNTRY_FLAG[r.program.country]} ${r.program.city}, ${COUNTRY_LABELS[r.program.country]}` },
     { label: 'Что подтянуть', value: (r) => (r.gaps.length ? r.gaps.join('; ') : 'пробелов нет') , best: (r) => r.gaps.length, lowerIsBetter: true },
   ];

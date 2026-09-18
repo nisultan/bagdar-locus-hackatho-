@@ -10,17 +10,10 @@ import { NextStep } from './screens/NextStep';
 import { ProfileWizard } from './screens/ProfileWizard';
 import { Recommendations } from './screens/Recommendations';
 import { RoadmapScreen } from './screens/Roadmap';
+import { Sidebar } from './components/Sidebar';
+import { STAGES } from './stages';
 import { useStore } from './state/store';
 
-export const STAGES = [
-  { id: 'start', label: 'Старт' },
-  { id: 'profile', label: 'Профиль' },
-  { id: 'diagnosis', label: 'Диагностика' },
-  { id: 'recs', label: 'Рекомендации' },
-  { id: 'compare', label: 'Сравнение' },
-  { id: 'plan', label: 'План' },
-  { id: 'next', label: 'Следующий шаг' },
-];
 
 export default function App() {
   const { state, dispatch, derived } = useStore();
@@ -39,6 +32,9 @@ export default function App() {
 
   return (
     <div className="app">
+      <Sidebar stage={stage} />
+
+      <div className="app-body">
       <header className="topbar">
         <a className="logo" href="#/">
           <span className="logo-mark" aria-hidden>
@@ -111,6 +107,7 @@ export default function App() {
         сверены с сайтами вузов ({new Date().getFullYear()}). Сервис не гарантирует поступление — всегда проверяйте условия
         на официальных сайтах.
       </footer>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { CountUp, Reveal, useTilt } from '../components/motion';
 import { ScrollPath } from '../components/ScrollPath';
 import { Button, CHECKED_ON, Icon } from '../components/ui';
-import { DEMO_PROFILE } from '../data/options';
+import { SAMPLE_PROFILE } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { go } from '../router';
 import { useStore } from '../state/store';
@@ -46,11 +46,11 @@ export function Landing() {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    dispatch({ type: 'saveProfile', profile: DEMO_PROFILE });
+                    dispatch({ type: 'saveProfile', profile: SAMPLE_PROFILE });
                     go('diagnosis');
                   }}
                 >
-                  Демо-профиль
+                  Посмотреть на примере
                 </Button>
               </>
             )}

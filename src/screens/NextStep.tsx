@@ -1,4 +1,4 @@
-import { Button, CATEGORY_META, DemoNote, Icon, PageHead, SourceLink } from '../components/ui';
+import { Button, CATEGORY_META, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
 import { monthYear, plural } from '../engine/format';
 import { go } from '../router';
 import { useStore } from '../state/store';
@@ -22,7 +22,7 @@ export function NextStep() {
             <div className="next-top">
               <span className={`cat cat-${next.category}`}><Icon name={CATEGORY_META[next.category].icon} size={14} /> {CATEGORY_META[next.category].label}</span>
               <span className="small">до: <b>{monthYear(next.due)}</b></span>
-              {next.demo && <DemoNote>дата — ориентир</DemoNote>}
+              {next.estimated && <EstimateNote>дата — ориентир</EstimateNote>}
             </div>
             <h2 className="next-title">{next.title}</h2>
             <p className="next-why">{next.why}</p>
