@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEMO_PROFILE } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { diagnose } from './diagnose';
+import { leversFor, rankLevers } from './leverage';
 import { recommend } from './recommend';
 import { buildRoadmap, intakeYear, nextTask } from './roadmap';
 
@@ -81,5 +82,51 @@ describe('diagnose', () => {
     const d = diagnose(DEMO_PROFILE);
     expect(d.goal).toContain('IT');
     expect(d.meters).toHaveLength(3);
+  });
+});
+
+describe('leverage', () => {
+  it('ranks levers and every claimed unlock really becomes eligible', () => {
+    const effects = rankLevers(DEMO_PROFILE);
+    expect(effects.length).toBeGreaterThan(0);
+
+    const baseIds = new Set(recommend(DEMO_PROFILE).eligible.map((r) => r.program.id));
+    for (const e of effects) {
+      const afterIds = new Set(recommend(e.lever.apply(DEMO_PROFILE)).eligible.map((r) => r.program.id));
+      for (const prog of e.unlocked) {
+        // разблокированная программа обязана отсутствовать до и присутствовать после
+        expect(baseIds.has(prog.id)).toBe(false);
+        expect(afterIds.has(prog.id)).toBe(true);
+      }
+    }
+  });
+
+  it('is sorted by payoff per unit of effort', () => {
+    const weights = rankLevers(DEMO_PROFILE).map((e) => e.weight);
+    expect([...weights].sort((a, b) => b - a)).toEqual(weights);
+  });
+
+  it('never offers a lever the student cannot pull', () => {
+    const maxed = { ...DEMO_PROFILE, ielts: 8, untExpected: 140, gpa: 5, grade: 'graduate' as const };
+    const ids = leversFor(maxed).map((l) => l.id);
+    expect(ids).not.toContain('ielts-05');
+    expect(ids).not.toContain('ielts-10');
+    expect(ids).not.toContain('unt-10');
+    expect(ids).not.toContain('gpa');
+  });
+
+  it('does not invent effects: applying a lever cannot shrink the eligible list', () => {
+    for (const e of rankLevers(DEMO_PROFILE)) {
+      const before = recommend(DEMO_PROFILE).eligible.length;
+      const after = recommend(e.lever.apply(DEMO_PROFILE)).eligible.length;
+      expect(after).toBeGreaterThanOrEqual(before);
+    }
+  });
+});
+
+describe('leverage grouping', () => {
+  it('shows one lever per profile field, not every step of it', () => {
+    const groups = rankLevers(DEMO_PROFILE).map((e) => e.lever.group);
+    expect(new Set(groups).size).toBe(groups.length);
   });
 });

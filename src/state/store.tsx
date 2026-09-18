@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import { diagnose, type Diagnosis } from '../engine/diagnose';
+import { leversFor } from '../engine/leverage';
 import { recommend, type RecommendResult } from '../engine/recommend';
 import { buildRoadmap, nextTask, type Roadmap } from '../engine/roadmap';
 import { EMPTY_PROFILE } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import type { Profile, RoadmapTask } from '../types';
 
-const KEY = 'unipath:v1';
+const KEY = 'bagdar:v1';
+/** Ключ до переименования продукта: читаем один раз, чтобы не обнулить начатый маршрут. */
+const LEGACY_KEY = 'unipath:v1';
 
 export interface Change {
   added: string[];
@@ -23,6 +26,8 @@ export interface State {
   done: Record<string, boolean>;
   visited: string[]; // stages reached
   change: Change | null;
+  /** Примеряемый рычаг: список пересобирается, но сам профиль не меняется. Не сохраняется. */
+  preview: string | null;
 }
 
 const INITIAL: State = {
@@ -34,6 +39,7 @@ const INITIAL: State = {
   done: {},
   visited: ['start'],
   change: null,
+  preview: null,
 };
 
 type Action =
@@ -43,6 +49,8 @@ type Action =
   | { type: 'toggleDone'; id: string }
   | { type: 'visit'; stage: string }
   | { type: 'dismissChange' }
+  | { type: 'previewLever'; id: string | null }
+  | { type: 'applyLever'; id: string }
   | { type: 'reset' };
 
 const topIds = (p: Profile) => recommend(p).top.map((r) => r.program.id);
@@ -86,6 +94,14 @@ function reducer(s: State, a: Action): State {
       return s.visited.includes(a.stage) ? s : { ...s, visited: [...s.visited, a.stage] };
     case 'dismissChange':
       return { ...s, change: null };
+    case 'previewLever':
+      return { ...s, preview: a.id };
+    case 'applyLever': {
+      // «Примерил и решил идти» — рычаг становится настоящей целью в профиле.
+      const lever = leversFor(s.profile).find((l) => l.id === a.id);
+      if (!lever) return { ...s, preview: null };
+      return reducer({ ...s, preview: null }, { type: 'saveProfile', profile: lever.apply(s.profile) });
+    }
     case 'reset':
       return INITIAL;
   }
@@ -93,11 +109,11 @@ function reducer(s: State, a: Action): State {
 
 function load(): State {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
     if (!raw) return INITIAL;
     const parsed = JSON.parse(raw) as Partial<State>;
     if (!parsed.profile || !Array.isArray(parsed.profile.interests)) return INITIAL;
-    return { ...INITIAL, ...parsed, profile: { ...EMPTY_PROFILE, ...parsed.profile }, change: null };
+    return { ...INITIAL, ...parsed, profile: { ...EMPTY_PROFILE, ...parsed.profile }, change: null, preview: null };
   } catch {
     return INITIAL;
   }
@@ -105,6 +121,8 @@ function load(): State {
 
 export interface Derived {
   recs: RecommendResult;
+  /** Профиль, по которому построен текущий список: настоящий или с примеренным рычагом. */
+  activeProfile: Profile;
   diagnosis: Diagnosis;
   roadmap: Roadmap;
   next: RoadmapTask | null;
@@ -131,18 +149,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const derived = useMemo<Derived>(() => {
-    const recs = recommend(state.profile);
+    // Примерка влияет только на список рекомендаций: план и прогресс остаются
+    // привязанными к настоящему профилю, иначе пользователь потеряет ориентир.
+    const lever = state.preview ? leversFor(state.profile).find((l) => l.id === state.preview) : undefined;
+    const activeProfile = lever ? lever.apply(state.profile) : state.profile;
+    const recs = recommend(activeProfile);
     const shortlist = state.shortlist.map((id) => PROGRAMS.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
     const roadmap = buildRoadmap(state.profile, shortlist, new Date());
     const doneCount = roadmap.tasks.filter((t) => state.done[t.id]).length;
     return {
       recs,
+      activeProfile,
       diagnosis: diagnose(state.profile),
       roadmap,
       next: nextTask(roadmap.tasks, state.done),
       progress: { done: doneCount, total: roadmap.tasks.length },
     };
-  }, [state.profile, state.shortlist, state.done]);
+  }, [state.profile, state.shortlist, state.done, state.preview]);
 
   return <StoreCtx.Provider value={{ state, dispatch, derived }}>{children}</StoreCtx.Provider>;
 }
