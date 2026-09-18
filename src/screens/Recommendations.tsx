@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { fetchAdvice, type AdviceResult } from '../ai';
 import { BandBadge, Button, Chip, DemoNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
 import { COUNTRY_FLAG, COUNTRY_LABELS, FIELD_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { plural, usd } from '../engine/format';
-import { relaxHints } from '../engine/recommend';
+import { recommend, relaxHints } from '../engine/recommend';
+import { leversFor } from '../engine/leverage';
+import { Levers } from './Levers';
 import { go } from '../router';
 import { useStore } from '../state/store';
 import type { CountryCode, Field, Recommendation } from '../types';
@@ -18,7 +20,22 @@ export function Recommendations() {
   const { state, dispatch, derived } = useStore();
   const { top, eligible, exclusions } = derived.recs;
   const [showAll, setShowAll] = useState(false);
-  const list = showAll ? eligible : top;
+
+  // В режиме примерки список обязан визуально измениться, иначе эффект рычага не виден.
+  // Считаем, каких программ не было в настоящем профиле, и поднимаем их в начало.
+  const unlockedIds = useMemo(() => {
+    if (!state.preview) return new Set<string>();
+    const base = new Set(recommend(state.profile).eligible.map((r) => r.program.id));
+    return new Set(eligible.filter((r) => !base.has(r.program.id)).map((r) => r.program.id));
+  }, [state.preview, state.profile, eligible]);
+
+  const baseList = showAll ? eligible : top;
+  const list = unlockedIds.size === 0
+    ? baseList
+    : [
+        ...eligible.filter((r) => unlockedIds.has(r.program.id)),
+        ...baseList.filter((r) => !unlockedIds.has(r.program.id)),
+      ];
   const hints = eligible.length < 3 ? relaxHints(state.profile) : [];
 
   return (
@@ -41,6 +58,8 @@ export function Recommendations() {
         </div>
       )}
 
+      <PreviewBanner />
+
       <WhatIf />
 
       {eligible.length === 0 ? (
@@ -57,7 +76,7 @@ export function Recommendations() {
             <div className="notice"><Icon name="info" /> <span>Нашлось мало вариантов. {hints.join('. ')}</span></div>
           )}
           <div className="rec-list">
-            {list.map((r, i) => <RecCard key={r.program.id} r={r} rank={i + 1} />)}
+            {list.map((r, i) => <RecCard key={r.program.id} r={r} rank={i + 1} unlocked={unlockedIds.has(r.program.id)} />)}
           </div>
           {eligible.length > top.length && (
             <Button variant="ghost" onClick={() => setShowAll((v) => !v)}>
@@ -66,6 +85,8 @@ export function Recommendations() {
           )}
         </>
       )}
+
+      {eligible.length > 0 && <Levers />}
 
       {exclusions.length > 0 && (
         <details className="card excluded">
@@ -99,7 +120,7 @@ export function Recommendations() {
   );
 }
 
-function RecCard({ r, rank }: { r: Recommendation; rank: number }) {
+function RecCard({ r, rank, unlocked = false }: { r: Recommendation; rank: number; unlocked?: boolean }) {
   const { state, dispatch } = useStore();
   const [open, setOpen] = useState(rank === 1);
   const [advice, setAdvice] = useState<AdviceResult | null>(null);
@@ -116,7 +137,10 @@ function RecCard({ r, rank }: { r: Recommendation; rank: number }) {
   };
 
   return (
-    <article className={`card rec${inPlan ? ' rec-in-plan' : ''}`}>
+    <article className={`card rec${inPlan ? ' rec-in-plan' : ''}${unlocked ? ' rec-unlocked' : ''}`}>
+      {unlocked && (
+        <p className="rec-unlocked-flag"><Icon name="spark" size={14} /> Открылось благодаря примеряемому изменению</p>
+      )}
       <div className="rec-head">
         <ScoreRing score={r.score} />
         <div className="rec-title">
@@ -140,6 +164,7 @@ function RecCard({ r, rank }: { r: Recommendation; rank: number }) {
           <b className="small">{p.deadline.label}</b>
         </div>
         <DemoNote />
+        <SourceLink href={p.sourceUrl} label="Проверить на сайте вуза" strong />
       </div>
 
       <ul className="reason-list">
@@ -171,10 +196,9 @@ function RecCard({ r, rank }: { r: Recommendation; rank: number }) {
           <p className="small"><b>Как поступают:</b> {p.entrance}</p>
           <div className="tags">{p.highlights.map((h) => <span key={h} className="tag">{h}</span>)}</div>
           <p className="small muted">
-            Направления: {p.fields.map((f: Field) => FIELD_LABELS[f]).join(', ')}. Стоимость и срок — ориентиры демо-набора.
+            Направления: {p.fields.map((f: Field) => FIELD_LABELS[f]).join(', ')}. Стоимость и дедлайн сверены с сайтом вуза —
+            проверьте по ссылке перед подачей.
           </p>
-          <SourceLink href={p.sourceUrl} />
-
           <div className="advice">
             {!advice && (
               <Button variant="secondary" small icon="spark" onClick={ask} disabled={loading}>
@@ -207,6 +231,31 @@ function RecCard({ r, rank }: { r: Recommendation; rank: number }) {
 }
 
 /** Quick "what if" controls: change key answers and see recommendations react immediately. */
+/** Пока включена примерка, список на экране — гипотеза, и это должно быть видно всегда. */
+function PreviewBanner() {
+  const { state, dispatch, derived } = useStore();
+  if (!state.preview) return null;
+  const lever = leversFor(state.profile).find((l) => l.id === state.preview);
+  if (!lever) return null;
+
+  return (
+    <div className="preview-banner" role="status">
+      <Icon name="spark" />
+      <div>
+        <b>Примерка: {lever.title}</b>
+        <p className="small">
+          Так список выглядел бы после этого изменения — {derived.recs.eligible.length} подходящих вариантов.
+          Ваш профиль не изменён.
+        </p>
+      </div>
+      <div className="preview-banner-actions">
+        <Button small variant="accent" onClick={() => dispatch({ type: 'applyLever', id: lever.id })}>Взять целью</Button>
+        <Button small variant="ghost" onClick={() => dispatch({ type: 'previewLever', id: null })}>Вернуть</Button>
+      </div>
+    </div>
+  );
+}
+
 function WhatIf() {
   const { state, dispatch } = useStore();
   const p = state.profile;

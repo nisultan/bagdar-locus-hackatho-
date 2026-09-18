@@ -1,11 +1,23 @@
 import type { Program } from '../types';
 
 /**
- * ДЕМО-ДАННЫЕ. Стоимость — округлённые ориентиры в USD/год, сроки — типичный месяц
- * прошлых приёмных циклов. Они НЕ являются подтверждёнными датами на текущий год:
- * в интерфейсе каждая цифра помечена и снабжена ссылкой на официальный сайт.
+ * ОРИЕНТИРОВОЧНЫЕ ДАННЫЕ, сверены с официальными источниками 18.09.2026.
+ *
+ * Что проверено по официальным страницам (sourceUrl у каждой записи):
+ *   - tuitionUSD — опубликованный прейскурант на 2026/27; для KZ пересчёт из тенге
+ *     по курсу ~525 ₸/$, поэтому цифра округлена и может плыть вместе с курсом;
+ *   - minIelts — официальный минимум по языку;
+ *   - deadline — дата приёмного цикла 2026/27 там, где вуз её опубликовал.
+ *
+ * Что НЕ подтверждено и остаётся оценкой составителя (не цитировать как факт):
+ *   - minGpa и minUnt — пороги гранта/конкурса меняются каждый год и зависят от
+ *     количества мест; здесь это ориентир «какой балл обычно проходит», не порог;
+ *   - livingUSD — усреднённая оценка стоимости жизни, не данные вуза;
+ *   - selectivity — субъективная шкала 1–3.
+ *
+ * Перед подачей документов цифру всегда перепроверять по sourceUrl.
  */
-export const DATA_VERSION = 'Демо-набор v1 · сентябрь 2026';
+export const DATA_VERSION = 'Данные сверены с официальными источниками · 18 сентября 2026';
 
 export const PROGRAMS: Program[] = [
   // ---------- Казахстан ----------
@@ -26,8 +38,8 @@ export const PROGRAMS: Program[] = [
     minIelts: 6.5,
     satRecommended: true,
     entrance: 'Внутренние экзамены NUET + IELTS/SAT, конкурс документов',
-    deadline: { month: 3, label: 'обычно зима–весна (несколько волн)' },
-    sourceUrl: 'https://nu.edu.kz/admissions',
+    deadline: { month: 2, label: 'NUET зимой–весной; дедлайн IELTS/TOEFL — февраль' },
+    sourceUrl: 'https://nu.edu.kz/admissions/how-to-apply/foundation-undergraduate/regular-admissions/',
     highlights: ['Обучение на английском', 'Сильная исследовательская база', 'Кампус в Астане'],
   },
   {
@@ -46,8 +58,8 @@ export const PROGRAMS: Program[] = [
     minGpa: 4.4,
     minIelts: 6.0,
     entrance: 'NUET + IELTS, конкурс документов',
-    deadline: { month: 3, label: 'обычно зима–весна (несколько волн)' },
-    sourceUrl: 'https://nu.edu.kz/admissions',
+    deadline: { month: 2, label: 'NUET зимой–весной; дедлайн IELTS/TOEFL — февраль' },
+    sourceUrl: 'https://nu.edu.kz/admissions/how-to-apply/foundation-undergraduate/regular-admissions/',
     highlights: ['Путь в медицину через NUSOM', 'Лаборатории мирового уровня'],
   },
   {
@@ -58,7 +70,7 @@ export const PROGRAMS: Program[] = [
     country: 'KZ',
     fields: ['cs', 'engineering'],
     language: ['en', 'ru'],
-    tuitionUSD: 5500,
+    tuitionUSD: 5000,
     livingUSD: 3600,
     grant: 'partial',
     grantNote: 'Государственные гранты по ЕНТ + внутренние скидки',
@@ -67,7 +79,7 @@ export const PROGRAMS: Program[] = [
     minUnt: 90,
     entrance: 'ЕНТ (математика + информатика), грантовый конкурс',
     deadline: { month: 7, label: 'приём документов обычно летом после ЕНТ' },
-    sourceUrl: 'https://kbtu.edu.kz/ru/',
+    sourceUrl: 'https://kbtu.edu.kz/ru/priemnaya-komissiya-kbtu',
     highlights: ['Партнёрства с IT-компаниями', 'Часть курсов на английском'],
   },
   {
@@ -87,7 +99,7 @@ export const PROGRAMS: Program[] = [
     minUnt: 75,
     entrance: 'ЕНТ (математика + информатика), грантовый конкурс',
     deadline: { month: 7, label: 'приём документов обычно летом после ЕНТ' },
-    sourceUrl: 'https://astanait.edu.kz/',
+    sourceUrl: 'https://astanait.edu.kz/ru/bachelor',
     highlights: ['Практико-ориентированная программа', 'Обучение на английском'],
   },
   {
@@ -98,7 +110,7 @@ export const PROGRAMS: Program[] = [
     country: 'KZ',
     fields: ['cs'],
     language: ['en'],
-    tuitionUSD: 4500,
+    tuitionUSD: 4000,
     livingUSD: 3000,
     grant: 'partial',
     grantNote: 'Государственные гранты + внутренние скидки за олимпиады',
@@ -107,7 +119,7 @@ export const PROGRAMS: Program[] = [
     minUnt: 80,
     entrance: 'ЕНТ + внутренний тест по английскому',
     deadline: { month: 7, label: 'приём документов обычно летом после ЕНТ' },
-    sourceUrl: 'https://sdu.edu.kz/',
+    sourceUrl: 'https://sdu.edu.kz/en/tuition-fees/',
     highlights: ['Кампус с общежитием', 'Сильное олимпиадное сообщество'],
   },
   {
@@ -118,7 +130,7 @@ export const PROGRAMS: Program[] = [
     country: 'KZ',
     fields: ['business', 'social'],
     language: ['en'],
-    tuitionUSD: 7000,
+    tuitionUSD: 7800,
     livingUSD: 3600,
     grant: 'partial',
     grantNote: 'Государственные гранты и университетские скидки',
@@ -128,7 +140,7 @@ export const PROGRAMS: Program[] = [
     minIelts: 5.5,
     entrance: 'ЕНТ + английский (IELTS или внутренний тест)',
     deadline: { month: 7, label: 'приём документов обычно летом' },
-    sourceUrl: 'https://www.kimep.kz/',
+    sourceUrl: 'https://www.kimep.kz/prospective-students/tuition-and-fees/',
     highlights: ['Американская модель обучения', 'Всё на английском'],
   },
   {
@@ -179,7 +191,7 @@ export const PROGRAMS: Program[] = [
     country: 'KZ',
     fields: ['medicine'],
     language: ['ru', 'kz'],
-    tuitionUSD: 5000,
+    tuitionUSD: 4300,
     livingUSD: 3000,
     grant: 'partial',
     grantNote: 'Государственные гранты по ЕНТ (биология + химия), высокий конкурс',
@@ -188,7 +200,7 @@ export const PROGRAMS: Program[] = [
     minUnt: 100,
     entrance: 'ЕНТ (биология + химия) + психометрическое тестирование',
     deadline: { month: 7, label: 'приём документов обычно летом' },
-    sourceUrl: 'https://amu.edu.kz/',
+    sourceUrl: 'https://amu.edu.kz/ru/postupayushchim/preyskurant-tsen-na-obrazovatelnye-uslugi/',
     highlights: ['Клиническая база в столице', 'Интернатура и резидентура'],
   },
   {
@@ -208,7 +220,7 @@ export const PROGRAMS: Program[] = [
     minUnt: 95,
     entrance: 'ЕНТ (история + иностранный язык), грантовый конкурс',
     deadline: { month: 7, label: 'приём документов обычно летом' },
-    sourceUrl: 'https://www.kaznu.kz/',
+    sourceUrl: 'https://welcome.kaznu.kz/',
     highlights: ['Крупнейший классический университет', 'Программы обмена'],
   },
   {
@@ -241,7 +253,7 @@ export const PROGRAMS: Program[] = [
     country: 'EE',
     fields: ['cs', 'science', 'engineering'],
     language: ['en'],
-    tuitionUSD: 7000,
+    tuitionUSD: 6500,
     livingUSD: 7500,
     grant: 'partial',
     grantNote: 'Возможны tuition waiver для сильных кандидатов',
@@ -250,7 +262,7 @@ export const PROGRAMS: Program[] = [
     minIelts: 6.0,
     entrance: 'Онлайн-заявка, мотивационное письмо, IELTS, аттестат',
     deadline: { month: 3, label: 'обычно в марте' },
-    sourceUrl: 'https://ut.ee/en/admissions',
+    sourceUrl: 'https://ut.ee/en/content/cost-tuition',
     highlights: ['Европейский диплом', 'Небольшие группы'],
   },
   {
@@ -274,25 +286,25 @@ export const PROGRAMS: Program[] = [
     highlights: ['Топ-инженерная школа Европы', 'Плата зависит от дохода семьи'],
   },
   {
-    id: 'tum-mt',
+    id: 'tum-bmds',
     university: 'TU Munich (Campus Heilbronn)',
-    program: 'Management and Technology (BSc)',
+    program: 'Management and Data Science (BSc)',
     city: 'Хайльбронн',
     country: 'DE',
     fields: ['business', 'engineering'],
     language: ['en'],
-    tuitionUSD: 6500,
+    tuitionUSD: 0,
     livingUSD: 11500,
     grant: 'none',
-    grantNote: 'Стипендий на бакалавриат мало, нужен блокированный счёт',
+    grantNote: 'Обучения нет в счёте: платится только семестровый взнос (~97 €). Нужен блокированный счёт на проживание',
     selectivity: 3,
     minGpa: 4.6,
     minIelts: 6.5,
     satRecommended: true,
     entrance: 'Признание аттестата (часто нужен Studienkolleg/1 курс вуза), IELTS, мотивация',
-    deadline: { month: 5, label: 'обычно весна–лето для зимнего семестра' },
-    sourceUrl: 'https://www.tum.de/en/studies/application',
-    highlights: ['Бизнес + технологии', 'Сильный бренд TUM'],
+    deadline: { month: 7, label: 'подача на зимний семестр: 15.05–15.07' },
+    sourceUrl: 'https://www.mgt.tum.de/programs/bachelor-management-data-science/how-to-apply',
+    highlights: ['Бизнес + данные', 'Без платы за обучение', 'Сильный бренд TUM'],
   },
   {
     id: 'elte-cs',
@@ -310,7 +322,7 @@ export const PROGRAMS: Program[] = [
     minGpa: 4.2,
     minIelts: 5.5,
     entrance: 'Заявка на Stipendium Hungaricum + вступительное собеседование/тест',
-    deadline: { month: 1, label: 'заявка на стипендию обычно до середины января' },
+    deadline: { month: 1, label: 'дедлайн заявки — 15 января, 14:00 CET' },
     sourceUrl: 'https://stipendiumhungaricum.hu/',
     highlights: ['Бесплатно при стипендии', 'Казахстан — страна-партнёр программы'],
   },
@@ -322,7 +334,7 @@ export const PROGRAMS: Program[] = [
     country: 'HU',
     fields: ['medicine'],
     language: ['en'],
-    tuitionUSD: 17000,
+    tuitionUSD: 16900,
     livingUSD: 6500,
     grant: 'none',
     grantNote: 'Стипендий почти нет, программа платная',
@@ -342,7 +354,7 @@ export const PROGRAMS: Program[] = [
     country: 'TR',
     fields: ['design', 'social'],
     language: ['en'],
-    tuitionUSD: 13000,
+    tuitionUSD: 18400,
     livingUSD: 6000,
     grant: 'partial',
     grantNote: 'Стипендии для иностранцев по результатам SAT/аттестата',
@@ -352,7 +364,7 @@ export const PROGRAMS: Program[] = [
     satRecommended: true,
     entrance: 'Международная заявка: аттестат, SAT (желательно), английский',
     deadline: { month: 5, label: 'обычно весна–лето' },
-    sourceUrl: 'https://w3.bilkent.edu.tr/',
+    sourceUrl: 'https://w3.bilkent.edu.tr/bilkent/international-and-other-students-tuition-fees/',
     highlights: ['Обучение на английском', 'Кампус с арт-студиями'],
   },
   {
@@ -363,7 +375,7 @@ export const PROGRAMS: Program[] = [
     country: 'TR',
     fields: ['cs', 'engineering'],
     language: ['en'],
-    tuitionUSD: 13000,
+    tuitionUSD: 18400,
     livingUSD: 6000,
     grant: 'partial',
     grantNote: 'Стипендии для иностранцев по результатам SAT/аттестата',
@@ -373,7 +385,7 @@ export const PROGRAMS: Program[] = [
     satRecommended: true,
     entrance: 'Международная заявка: аттестат, SAT, английский',
     deadline: { month: 5, label: 'обычно весна–лето' },
-    sourceUrl: 'https://w3.bilkent.edu.tr/',
+    sourceUrl: 'https://w3.bilkent.edu.tr/bilkent/international-and-other-students-tuition-fees/',
     highlights: ['Сильная инженерная школа', 'Близко культурно и по перелёту'],
   },
   {
@@ -412,8 +424,8 @@ export const PROGRAMS: Program[] = [
     minGpa: 3.8,
     minIelts: 5.5,
     entrance: 'Онлайн-заявка, нострификация аттестата, вступительные тесты',
-    deadline: { month: 4, label: 'обычно весна' },
-    sourceUrl: 'https://www.cvut.cz/en/admissions',
+    deadline: { month: 3, label: 'подача на FEL обычно до конца марта' },
+    sourceUrl: 'https://fel.cvut.cz/en/admissions/admission-procedures/tuition-fees',
     highlights: ['Доступный вход в ЕС', 'Бесплатно при переходе на чешский'],
   },
   {
@@ -424,16 +436,16 @@ export const PROGRAMS: Program[] = [
     country: 'UK',
     fields: ['cs'],
     language: ['en'],
-    tuitionUSD: 38000,
+    tuitionUSD: 48000,
     livingUSD: 15000,
     grant: 'none',
     grantNote: 'Стипендии для иностранцев редкие и частичные',
     selectivity: 3,
     minGpa: 4.7,
-    minIelts: 6.5,
+    minIelts: 7.0,
     entrance: 'UCAS, foundation year или 1 курс вуза для аттестата РК, IELTS',
     deadline: { month: 1, label: 'UCAS обычно в конце января' },
-    sourceUrl: 'https://www.manchester.ac.uk/study/undergraduate/',
+    sourceUrl: 'https://www.manchester.ac.uk/study/undergraduate/courses/2026/00560/bsc-computer-science/',
     highlights: ['Russell Group', 'Трёхлетний бакалавриат'],
   },
   {
@@ -444,7 +456,7 @@ export const PROGRAMS: Program[] = [
     country: 'US',
     fields: ['business', 'cs'],
     language: ['en'],
-    tuitionUSD: 34000,
+    tuitionUSD: 39000,
     livingUSD: 16000,
     grant: 'partial',
     grantNote: 'Merit-скидки для иностранцев, частичные',
@@ -454,7 +466,7 @@ export const PROGRAMS: Program[] = [
     satRecommended: true,
     entrance: 'Онлайн-заявка, аттестат, английский; SAT усиливает заявку',
     deadline: { month: 5, label: 'rolling admission, лучше подавать осенью–зимой' },
-    sourceUrl: 'https://admission.asu.edu/international',
+    sourceUrl: 'https://admission.asu.edu/cost-aid/international',
     highlights: ['Большой выбор специальностей', 'Можно сменить major'],
   },
 ];

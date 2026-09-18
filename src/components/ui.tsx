@@ -20,6 +20,8 @@ const PATHS: Record<string, string> = {
   flag: 'M5 21V4h11l-2 4 2 4H5',
   edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
   warn: 'M12 9v4M12 17h.01M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z',
+  sun: 'M12 4V2M12 22v-2M4 12H2M22 12h-2M6 6L4.5 4.5M19.5 19.5L18 18M18 6l1.5-1.5M4.5 19.5L6 18M12 8a4 4 0 100 8 4 4 0 000-8z',
+  moon: 'M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z',
   refresh: 'M4 12a8 8 0 0114-5.3L20 9M20 4v5h-5M20 12a8 8 0 01-14 5.3L4 15M4 20v-5h5',
 };
 
@@ -109,16 +111,60 @@ export function Meter({ value, max = 100, tone = 'primary' }: { value: number; m
 
 export function DemoNote({ children }: { children?: ReactNode }) {
   return (
-    <span className="demo-note" title="Ориентир из демо-набора данных. Проверьте на официальном сайте.">
-      <Icon name="info" size={14} /> {children ?? 'демо-ориентир'}
+    <span
+      className="demo-note"
+      title="Стоимость пересчитана в USD и округлена, дедлайн — из цикла приёма этого года. Точные цифры смотрите на сайте вуза."
+    >
+      <Icon name="info" size={14} /> {children ?? 'округлённый ориентир'}
     </span>
   );
 }
 
-export function SourceLink({ href, label = 'Официальный сайт' }: { href: string; label?: string }) {
+/** Дата, на которую данные сверялись с официальными страницами. */
+export const CHECKED_ON = '18.09.2026';
+
+function domainOf(href: string) {
+  try {
+    return new URL(href).hostname.replace(/^www\./, '');
+  } catch {
+    return href;
+  }
+}
+
+/**
+ * Кнопка-первоисточник. Показывает реальный домен, куда ведёт ссылка, и дату сверки —
+ * чтобы цифру рядом можно было проверить, не гадая, откуда она взялась.
+ */
+export function SourceLink({
+  href,
+  label = 'Официальный сайт',
+  strong = false,
+  checked = true,
+}: {
+  href: string;
+  label?: string;
+  strong?: boolean;
+  checked?: boolean;
+}) {
   return (
-    <a className="source" href={href} target="_blank" rel="noreferrer">
-      <Icon name="link" size={14} /> {label}
+    <a
+      className={`source-btn${strong ? ' source-btn-strong' : ''}`}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={`Открыть первоисточник: ${href}`}
+    >
+      <span className="source-btn-icon"><Icon name="link" size={14} /></span>
+      <span className="source-btn-body">
+        <b>{label}</b>
+        <span className="source-btn-host">{domainOf(href)}</span>
+      </span>
+      {checked && (
+        <span className="source-btn-badge" title={`Данные сверялись ${CHECKED_ON}`}>
+          <Icon name="check" size={11} /> {CHECKED_ON}
+        </span>
+      )}
+      <span className="source-btn-go" aria-hidden><Icon name="arrow" size={14} /></span>
     </a>
   );
 }
