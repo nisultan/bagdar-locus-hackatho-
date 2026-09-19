@@ -608,6 +608,7 @@ export const kk: Dict = {
   'auth.errNoUser': 'Мұндай аккаунт осы браузерден табылмады',
   'auth.errWrongPassword': 'Құпиясөз қате',
   'auth.errGoogleOff': 'Google арқылы кіру бапталмаған: VITE_GOOGLE_CLIENT_ID қажет (README қараңыз).',
+  'auth.redirectFailed': 'Кіруді аяқтау мүмкін болмады: {reason}',
   'auth.errGoogleFailed': 'Google жауап бермеді — қайталап көріңіз немесе құпиясөзбен кіріңіз.',
   'auth.errStorage': 'Браузер сақтауға тыйым салды — құпиялылық баптауларын тексеріңіз',
   'auth.cloudNote': 'Аккаунт бұлтта (Supabase): маршрут пен жоспардағы белгілер кез келген құрылғыдан қолжетімді, құпиясөзді сервер тексереді.',

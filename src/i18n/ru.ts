@@ -606,6 +606,7 @@ export const ru = {
   'auth.errNoUser': 'Такой аккаунт не найден в этом браузере',
   'auth.errWrongPassword': 'Неверный пароль',
   'auth.errGoogleOff': 'Вход через Google не настроен: нужен VITE_GOOGLE_CLIENT_ID (см. README).',
+  'auth.redirectFailed': 'Не удалось завершить вход: {reason}',
   'auth.errGoogleFailed': 'Google не ответил — попробуйте ещё раз или войдите по паролю.',
   'auth.errStorage': 'Браузер запретил сохранение — проверьте настройки приватности',
   'auth.cloudNote': 'Аккаунт в облаке (Supabase): маршрут и отметки в плане доступны с любого устройства, пароль проверяется на сервере.',

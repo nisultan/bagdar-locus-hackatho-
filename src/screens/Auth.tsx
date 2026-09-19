@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AuthFailure, authMode, getSession, googleEnabled, passwordStrength, renderGoogleButton, resetPassword,
-  signIn, signInWithGoogle, signOut, signUp, subscribeSession,
+  getRedirectError, signIn, signInWithGoogle, signOut, signUp, subscribeRedirectError, subscribeSession,
   type AuthError, type Session,
 } from '../auth';
 import { Button, GoogleMark, Icon, Meter, PageHead } from '../components/ui';
@@ -25,11 +25,15 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
   const [busy, setBusy] = useState(false);
   const googleBox = useRef<HTMLDivElement>(null);
   const [googleError, setGoogleError] = useState<AuthError | null>(null);
+  // Причина неудачного возврата от Google или из письма — иначе человек
+  // видит просто перезагруженную страницу и не понимает, что пошло не так.
+  const [redirectError, setRedirectError] = useState<string | null>(getRedirectError);
   const cloud = authMode() === 'cloud';
 
   // Вход через Google и подтверждение почты возвращают пользователя на эту страницу,
   // поэтому сессия может появиться уже после первого рендера.
   useEffect(() => subscribeSession(setSession) as unknown as () => void, []);
+  useEffect(() => subscribeRedirectError(setRedirectError) as unknown as () => void, []);
 
   // Кнопку Google Identity Services рисуем только в локальном режиме:
   // в облачном Supabase сам уводит на экран Google.
@@ -190,6 +194,12 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
             </p>
           )}
         </form>
+
+        {redirectError && (
+          <p className="error" role="alert">
+            <Icon name="warn" size={16} /> {t('auth.redirectFailed', { reason: redirectError })}
+          </p>
+        )}
 
         <div className="auth-divider"><span>{t('auth.or')}</span></div>
 

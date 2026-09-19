@@ -16,6 +16,17 @@
  */
 import { cloudAuth, getSupabase } from './supabase';
 
+/**
+ * Куда Supabase вернёт человека после Google или письма.
+ *
+ * Без фрагмента намеренно: в implicit-режиме Supabase всё равно заменяет его
+ * своими токенами, а список Redirect URLs в панели сверяется по адресу без
+ * хеша — лишний «#/auth» только мешал совпадению. На нужный экран мы уходим
+ * сами, уже разобрав ответ (см. cleanUrl).
+ */
+const redirectTarget = () =>
+  typeof window === 'undefined' ? '' : `${window.location.origin}${window.location.pathname}`;
+
 const ACCOUNTS_KEY = 'bagdar.accounts';
 const SESSION_KEY = 'bagdar.session';
 const ITERATIONS = 210_000;
@@ -127,43 +138,101 @@ function toSession(user: SupaUser): Session {
 }
 
 /**
- * Возврат после входа через Google или ссылки из письма.
+ * Возврат после входа через Google или по ссылке из письма.
  *
- * Supabase умеет два формата ответа, и нам нужны оба:
- *   PKCE      — ?code=... в query (так работает supabase-js по умолчанию);
- *   implicit  — #access_token=...&refresh_token=... в хеше.
+ * supabase-js в этой версии работает в implicit-режиме: токены прилетают во
+ * ФРАГМЕНТЕ адреса (`#access_token=...`), а фрагмент у нас занят hash-роутером.
+ * Роутер просыпается первым, не узнаёт такой «маршрут» и делает go('') — вместе
+ * с хешем он стирал токены раньше, чем их кто-либо прочитал. Со стороны это
+ * выглядело так, будто сайт просто перезагрузился и вход не сработал.
  *
- * Хеш здесь занят роутером, поэтому адрес приходит вида `#/auth#access_token=...`.
- * Наивный разбор всего хеша ломался: первым ключом получался «/auth#access_token»,
- * токен не находился, и человек возвращался на сайт как будто не вошёл.
- * Берём часть после ПОСЛЕДНЕГО «#» — это и есть ответ Supabase.
+ * Поэтому ответ снимаем с адреса СИНХРОННО при импорте модуля: импорты
+ * выполняются до первого рендера и до эффектов роутера.
  */
-async function consumeOAuthRedirect(client: SupabaseLike) {
-  const url = new URL(window.location.href);
+const AUTH_PARAMS = ['code', 'access_token', 'refresh_token', 'error', 'error_code', 'error_description'] as const;
 
-  const code = url.searchParams.get('code');
-  if (code) {
-    await client.auth.exchangeCodeForSession(code);
-    return cleanUrl();
-  }
+type RedirectPayload = Partial<Record<(typeof AUTH_PARAMS)[number], string>>;
 
+function captureAuthRedirect(): RedirectPayload | null {
+  if (typeof window === 'undefined') return null;
+
+  const query = new URLSearchParams(window.location.search);
+
+  // Supabase заменяет фрагмент целиком, поэтому «#/auth» превращается в
+  // «#access_token=...». Если фрагмент начинается со слэша — это наш маршрут.
   const hash = window.location.hash;
-  const lastHash = hash.lastIndexOf('#');
-  const fragment = lastHash >= 0 ? hash.slice(lastHash + 1) : '';
-  if (!fragment.includes('access_token=')) return;
+  const raw = hash.slice(hash.lastIndexOf('#') + 1);
+  const fragment = new URLSearchParams(raw.startsWith('/') ? '' : raw);
 
-  const params = new URLSearchParams(fragment);
-  const access_token = params.get('access_token');
-  const refresh_token = params.get('refresh_token');
-  if (access_token && refresh_token) {
-    await client.auth.setSession({ access_token, refresh_token });
+  const found: RedirectPayload = {};
+  for (const key of AUTH_PARAMS) {
+    const value = query.get(key) ?? fragment.get(key);
+    if (value) found[key] = value;
   }
+
+  if (Object.keys(found).length === 0) return null;
   cleanUrl();
+  return found;
 }
 
 /** Убираем токен или код из адреса и истории — там им не место. */
 function cleanUrl() {
   window.history.replaceState(null, '', window.location.pathname + '#/auth');
+}
+
+const redirectPayload = captureAuthRedirect();
+
+// ---------- ошибка возврата ----------
+
+let redirectError: string | null = null;
+const errorListeners = new Set<(e: string | null) => void>();
+
+export function getRedirectError(): string | null {
+  return redirectError;
+}
+
+export function subscribeRedirectError(fn: (e: string | null) => void) {
+  errorListeners.add(fn);
+  return () => {
+    errorListeners.delete(fn);
+  };
+}
+
+function setRedirectError(message: string | null) {
+  redirectError = message;
+  errorListeners.forEach((fn) => fn(message));
+}
+
+// Если провайдер вернул ошибку, показать её можно сразу: ни SDK, ни сеть не нужны.
+if (redirectPayload?.error) {
+  redirectError = redirectPayload.error_description || redirectPayload.error;
+}
+
+/**
+ * Пускаем в дело то, что сняли с адреса. Любая неудача становится видимой:
+ * раньше ошибка обмена кода молча игнорировалась, и человек возвращался
+ * на страницу без объяснения, почему он не вошёл.
+ */
+async function consumeOAuthRedirect(client: SupabaseLike) {
+  if (!redirectPayload) return;
+
+  if (redirectPayload.error) {
+    setRedirectError(redirectPayload.error_description || redirectPayload.error);
+    return;
+  }
+
+  if (redirectPayload.code) {
+    const { error } = await client.auth.exchangeCodeForSession(redirectPayload.code);
+    if (error) setRedirectError(error.message);
+    return;
+  }
+
+  const access_token = redirectPayload.access_token;
+  const refresh_token = redirectPayload.refresh_token;
+  if (access_token && refresh_token) {
+    const { error } = await client.auth.setSession({ access_token, refresh_token });
+    if (error) setRedirectError(error.message);
+  }
 }
 
 type SupabaseLike = Awaited<NonNullable<ReturnType<typeof getSupabase>>>;
@@ -194,9 +263,14 @@ function bootstrapCloud(): Promise<SupabaseLike | null> {
 // Сессию сверяем с сервером в простое после загрузки: до этого шапка показывает
 // закешированный аккаунт, поэтому подключение SDK ничего не задерживает.
 if (cloudAuth() && typeof window !== 'undefined') {
-  const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
-  if (idle) idle(() => void bootstrapCloud());
-  else window.setTimeout(() => void bootstrapCloud(), 1200);
+  if (redirectPayload) {
+    // Человек только что вернулся от Google или из письма — ждать простоя нельзя.
+    void bootstrapCloud();
+  } else {
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+    if (idle) idle(() => void bootstrapCloud());
+    else window.setTimeout(() => void bootstrapCloud(), 1200);
+  }
 }
 
 /** Тексты ошибок Supabase — в наши коды, чтобы интерфейс говорил по-человечески. */
@@ -292,7 +366,7 @@ export async function signUp(email: string, password: string, name: string): Pro
       password,
       options: {
         data: { full_name: name.trim() },
-        emailRedirectTo: `${window.location.origin}${window.location.pathname}#/auth`,
+        emailRedirectTo: redirectTarget(),
       },
     });
     if (error) throw new AuthFailure(mapSupabaseError(error.message));
@@ -352,7 +426,7 @@ export async function resetPassword(email: string): Promise<void> {
   const emailError = validateEmail(email);
   if (emailError) throw new AuthFailure(emailError);
   const { error } = await client.auth.resetPasswordForEmail(normalize(email), {
-    redirectTo: `${window.location.origin}${window.location.pathname}#/auth`,
+    redirectTo: redirectTarget(),
   });
   if (error) throw new AuthFailure(mapSupabaseError(error.message));
 }
@@ -373,7 +447,7 @@ export async function signInWithGoogle(): Promise<void> {
   if (!client) throw new AuthFailure('auth.errGoogleOff');
   const { error } = await client.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}${window.location.pathname}#/auth` },
+    options: { redirectTo: redirectTarget() },
   });
   if (error) throw new AuthFailure('auth.errGoogleFailed');
 }
