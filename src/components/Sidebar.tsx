@@ -89,12 +89,6 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-foot">
-        {state.profileDone && (
-          <a className="sidebar-me" href="#/me" title={t('me.nav')}>
-            <Icon name="academic" size={16} />
-            <span className="sidebar-label">{t('me.nav')}</span>
-          </a>
-        )}
         {state.profileDone && derived.next && (
           <a className="sidebar-next" href="#/next">
             <span className="small">{t('nav.nextStep')}</span>
@@ -136,11 +130,11 @@ function SidebarAccount() {
 
   if (session) {
     return (
-      <a className="sidebar-account sidebar-account-in" href="#/auth" title={session.email}>
+      <a className="sidebar-account sidebar-account-in" href="#/me" title={session.email}>
         <span className="sidebar-avatar" aria-hidden>{session.name.slice(0, 1).toUpperCase()}</span>
         <span className="sidebar-label">
           <b>{session.name.split(' ')[0]}</b>
-          <span className="small muted">{t('nav.accountIn')}</span>
+          <span className="small muted">{t('me.nav')}</span>
         </span>
       </a>
     );

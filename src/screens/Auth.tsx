@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AuthFailure, authMode, getSession, googleEnabled, passwordStrength, renderGoogleButton, resetPassword,
-  getRedirectError, signIn, signInWithGoogle, signOut, signUp, subscribeRedirectError, subscribeSession,
+  getRedirectError, signIn, signInWithGoogle, signUp, subscribeRedirectError, subscribeSession,
   type AuthError, type Session,
 } from '../auth';
 import { Button, GoogleMark, Icon, Meter, PageHead } from '../components/ui';
-import { getSyncStatus, subscribeSync, type SyncStatus } from '../state/sync';
 import { t } from '../i18n';
 import { go } from '../router';
 
@@ -89,31 +88,14 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
     }
   };
 
-  if (session) {
-    return (
-      <div className="stack auth-wrap">
-        <PageHead eyebrow={t('auth.eyebrow')} title={t('auth.signedInTitle', { name: session.name })} />
-        <section className="card auth-card">
-          <p className="auth-account">
-            <span className="auth-avatar" aria-hidden>{session.name.slice(0, 1).toUpperCase()}</span>
-            <span>
-              <b>{session.name}</b>
-              <span className="small muted"> {session.email}</span>
-              <span className="small muted"> · {t(session.provider === 'google' ? 'auth.viaGoogle' : 'auth.viaPassword')}</span>
-            </span>
-          </p>
-          <p className="small muted">{t(cloud ? 'auth.cloudNote' : 'auth.localNote')}</p>
-          {cloud && <SyncBadge />}
-          <div className="auth-actions">
-            <Button iconRight="arrow" onClick={() => go('recs')}>{t('auth.toRoute')}</Button>
-            <Button variant="ghost" icon="refresh" onClick={async () => { await signOut(); setSession(null); }}>
-              {t('auth.signOut')}
-            </Button>
-          </div>
-        </section>
-      </div>
-    );
-  }
+  // Аккаунт и профиль — одна страница. Этот экран нужен только для входа
+  // и регистрации; вошедшего сразу уводим в карточку профиля, чтобы данные
+  // об аккаунте не жили в двух местах.
+  useEffect(() => {
+    if (session) go('me');
+  }, [session]);
+
+  if (session) return null;
 
   const strength = passwordStrength(password);
 
@@ -230,18 +212,3 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
 }
 
 /** Состояние синхронизации маршрута с облаком — чтобы не гадать, сохранилось ли. */
-function SyncBadge() {
-  const [status, setStatus] = useState<SyncStatus>(getSyncStatus);
-  useEffect(() => {
-    const off = subscribeSync(setStatus);
-    return () => { off(); };
-  }, []);
-  if (status === 'off') return null;
-  const tone = status === 'error' ? 'bad' : status === 'saved' ? 'ok' : 'muted';
-  const icon = status === 'error' ? 'warn' : status === 'saved' ? 'check' : 'refresh';
-  return (
-    <p className={`small sync-badge ${tone}`}>
-      <Icon name={icon} size={14} /> {t(`sync.${status}` as 'sync.idle')}
-    </p>
-  );
-}

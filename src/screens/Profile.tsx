@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getSession, signOut, subscribeSession, type Session } from '../auth';
+import { authMode, getSession, signOut, subscribeSession, type Session } from '../auth';
 import { Reveal } from '../components/motion';
 import { Button, CountryTag, Icon, Meter, PageHead } from '../components/ui';
 import {
@@ -248,6 +248,7 @@ function AccountCard({ session, sync, name }: { session: Session | null; sync: S
             <span className={`small me-sync me-sync-${sync}`}>
               <Icon name={sync === 'error' ? 'warn' : 'check'} size={13} /> {t(syncKey(sync))}
             </span>
+            <span className="small muted">{t(authMode() === 'cloud' ? 'auth.cloudNote' : 'auth.localNote')}</span>
           </>
         ) : (
           <>
@@ -258,7 +259,7 @@ function AccountCard({ session, sync, name }: { session: Session | null; sync: S
       </div>
 
       {session ? (
-        <Button small variant="ghost" onClick={() => void signOut()}>{t('me.signOut')}</Button>
+        <Button small variant="danger" icon="refresh" onClick={() => void signOut()}>{t('me.signOut')}</Button>
       ) : (
         <Button small iconRight="arrow" onClick={() => go('auth')}>{t('me.signIn')}</Button>
       )}

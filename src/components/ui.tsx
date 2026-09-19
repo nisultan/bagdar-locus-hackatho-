@@ -49,7 +49,7 @@ export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; s
 export function Button(props: {
   children: ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'accent';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'accent' | 'danger';
   icon?: string;
   iconRight?: string;
   disabled?: boolean;
