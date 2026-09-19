@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
+import { photoFor } from '../data/photos';
 import { t, type Key } from '../i18n';
 import { BAND_LABELS } from '../engine/recommend';
 import type { Band, TaskCategory } from '../types';
 
 const PATHS: Record<string, string> = {
+  user: 'M12 12a4 4 0 100-8 4 4 0 000 8zM5 20a7 7 0 0114 0',
   check: 'M5 12.5l4.5 4.5L19 7.5',
   arrow: 'M5 12h14M13 6l6 6-6 6',
   back: 'M19 12H5M11 6l-6 6 6 6',
@@ -205,5 +207,42 @@ export function PageHead({ eyebrow, title, children }: { eyebrow: string; title:
       <h1>{title}</h1>
       {children && <div className="lead">{children}</div>}
     </header>
+  );
+}
+
+/**
+ * Обложка карточки вуза. Фото — с Wikimedia Commons под свободной лицензией,
+ * поэтому подпись с автором и лицензией обязательна и показывается всегда.
+ * Если фото для вуза нет, рисуем аккуратную заглушку из инициалов, а не пустоту.
+ */
+export function UniCover({ programId, university, city }: { programId: string; university: string; city: string }) {
+  const photo = photoFor(programId);
+  const initials = university
+    .replace(/[(),.]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+
+  if (!photo) {
+    return (
+      <div className="uni-cover uni-cover-empty">
+        <span className="uni-initials" aria-hidden>{initials}</span>
+        <span className="uni-cover-city">{city}</span>
+        <span className="uni-credit uni-credit-empty">{t('photo.none')}</span>
+      </div>
+    );
+  }
+
+  return (
+    <figure className="uni-cover">
+      <img src={photo.src} alt={t('photo.alt', { university })} loading="lazy" width={1100} height={620} />
+      <figcaption className="uni-credit">
+        <a href={photo.page} target="_blank" rel="noreferrer noopener">
+          {t('photo.credit', { author: photo.author, license: photo.license })}
+        </a>
+      </figcaption>
+    </figure>
   );
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { fetchAdvice, type AdviceResult } from '../ai';
-import { BandBadge, Button, Chip, CountryTag, EstimateNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
+import { BandBadge, Button, Chip, CountryTag, EstimateNote, Icon, Meter, PageHead, ScoreRing, SourceLink, UniCover } from '../components/ui';
 import { COUNTRY_FLAG, COUNTRY_LABELS, FIELD_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { usd } from '../engine/format';
@@ -145,6 +145,8 @@ function RecCard({ r, rank, unlocked = false }: { r: Recommendation; rank: numbe
       {unlocked && (
         <p className="rec-unlocked-flag"><Icon name="spark" size={14} /> {t('lv.unlockedFlag')}</p>
       )}
+      <UniCover programId={p.id} university={p.university} city={p.city} />
+
       <div className="rec-head">
         <ScoreRing score={r.score} />
         <div className="rec-title">

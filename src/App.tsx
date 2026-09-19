@@ -18,6 +18,9 @@ import { STAGES } from './stages';
 
 import { Legal } from './screens/Legal';
 import { Profile } from './screens/Profile';
+import { Auth } from './screens/Auth';
+import { Credits } from './screens/Credits';
+import { getSession, subscribeSession, type Session } from './auth';
 import { useStore } from './state/store';
 
 const SIDEBAR_KEY = 'bagdar.sidebar';
@@ -29,7 +32,7 @@ export default function App() {
   useLang(); // перерисовать всё дерево при смене языка
   // Правовые страницы живут вне маршрута: они не этап и не требуют анкеты.
   const legal = route.stage === 'privacy' || route.stage === 'terms' ? route.stage : null;
-  const aside = route.stage === 'me' ? 'me' : null;
+  const aside = ['me', 'auth', 'signup', 'photos'].includes(route.stage) ? route.stage : null;
   const known = STAGES.some((s) => s.id === route.stage);
   const needsProfile = !state.profileDone && !['start', 'profile'].includes(route.stage);
   const stage = !known ? 'start' : needsProfile ? 'profile' : route.stage;
@@ -100,6 +103,7 @@ export default function App() {
               <span className="topbar-next-text">{t('app.stepChip', { title: derived.next.title })}</span>
             </a>
           )}
+          <AccountButton />
           <LangToggle />
           <ThemeToggle />
         </div>
@@ -137,6 +141,8 @@ export default function App() {
       <main className="main" key={legal ?? aside ?? stage}>
         {legal && <Legal kind={legal} />}
         {aside === 'me' && <Profile />}
+        {(aside === 'auth' || aside === 'signup') && <Auth mode={aside === 'signup' ? 'signup' : 'signin'} />}
+        {aside === 'photos' && <Credits />}
         {!legal && !aside && stage === 'start' && <Landing />}
         {!legal && !aside && stage === 'profile' && <ProfileWizard step={Number(route.param) || 1} />}
         {!legal && !aside && stage === 'diagnosis' && <Diagnosis />}
@@ -151,9 +157,34 @@ export default function App() {
         <p className="footer-links">
           <a href="#/privacy">{t('app.privacy')}</a>
           <a href="#/terms">{t('app.terms')}</a>
+          <a href="#/photos">{t('photo.link')}</a>
         </p>
       </footer>
       </div>
     </div>
+  );
+}
+
+/** Кнопка аккаунта в шапке: показывает инициал вошедшего или зовёт войти. */
+function AccountButton() {
+  const [session, setSession] = useState<Session | null>(getSession);
+  useEffect(() => {
+    const off = subscribeSession(setSession);
+    return () => { off(); };
+  }, []);
+
+  if (!session) {
+    return (
+      <a className="account-btn" href="#/auth">
+        <Icon name="user" size={16} />
+        <span className="account-btn-text">{t('app.signInCta')}</span>
+      </a>
+    );
+  }
+  return (
+    <a className="account-btn account-btn-in" href="#/auth" title={session.email}>
+      <span className="account-avatar" aria-hidden>{session.name.slice(0, 1).toUpperCase()}</span>
+      <span className="account-btn-text">{session.name.split(' ')[0]}</span>
+    </a>
   );
 }

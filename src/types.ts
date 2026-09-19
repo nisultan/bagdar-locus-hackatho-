@@ -90,3 +90,14 @@ export interface RoadmapTask {
   estimated: boolean; // true when the date is our estimate, not a date the university published
   relatedProgramId?: string;
 }
+
+/** Фото кампуса со свободной лицензией + данные для обязательной атрибуции. */
+export interface UniversityPhoto {
+  src: string; // путь внутри public/
+  author: string;
+  year: string;
+  title: string;
+  license: string;
+  licenseUrl: string;
+  page: string; // страница файла на Wikimedia Commons
+}
