@@ -4,8 +4,9 @@ import { RouteLoader } from '../components/RouteLoader';
 import { ScrollPath } from '../components/ScrollPath';
 import { Button, CHECKED_ON, Icon } from '../components/ui';
 import { SAMPLE_PROFILE } from '../data/options';
+import { COUNTRY_FLAG, COUNTRY_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
-import { t } from '../i18n';
+import { plural, t } from '../i18n';
 import { go } from '../router';
 import { useStore } from '../state/store';
 
@@ -16,6 +17,30 @@ const STEPS = [
 ] as const;
 
 const COUNTRIES = new Set(PROGRAMS.map((p) => p.country)).size;
+
+/** Сколько программ в наборе на каждую страну — считаем из самих данных, не руками. */
+const BY_COUNTRY = PROGRAMS.reduce<Record<string, number>>((acc, p) => {
+  acc[p.country] = (acc[p.country] ?? 0) + 1;
+  return acc;
+}, {});
+
+/** Вес каждой части оценки — те же числа, что использует движок в breakdown. */
+const SCORE_PARTS = [
+  { key: 'lb.scoreInterests', max: 35 },
+  { key: 'lb.scoreAcademic', max: 25 },
+  { key: 'lb.scoreBudget', max: 20 },
+  { key: 'lb.scoreLanguage', max: 10 },
+  { key: 'lb.scorePriorities', max: 10 },
+] as const;
+
+const CATALOG_POINTS = ['lb.catalog1', 'lb.catalog2', 'lb.catalog3', 'lb.catalog4'] as const;
+const BAGDAR_POINTS = ['lb.bagdar1', 'lb.bagdar2', 'lb.bagdar3', 'lb.bagdar4'] as const;
+const HONEST_POINTS = [
+  { t: 'lb.honest1t', x: 'lb.honest1x', icon: 'warn' },
+  { t: 'lb.honest2t', x: 'lb.honest2x', icon: 'info' },
+  { t: 'lb.honest3t', x: 'lb.honest3x', icon: 'link' },
+  { t: 'lb.honest4t', x: 'lb.honest4x', icon: 'lock' },
+] as const;
 
 export function Landing() {
   const { state, dispatch, derived } = useStore();
@@ -128,6 +153,97 @@ export function Landing() {
           </Reveal>
         ))}
       </section>
+
+
+      <Reveal as="section" className="why">
+        <div className="why-head">
+          <h2>{t('lb.whyTitle')}</h2>
+          <p className="muted">{t('lb.whyLead')}</p>
+        </div>
+        <div className="why-cols">
+          <div className="why-col why-col-old">
+            <h3>{t('lb.catalogTitle')}</h3>
+            <ul>
+              {CATALOG_POINTS.map((k) => (
+                <li key={k}><Icon name="close" size={15} /> {t(k)}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="why-col why-col-new">
+            <h3>{t('lb.bagdarTitle')}</h3>
+            <ul>
+              {BAGDAR_POINTS.map((k) => (
+                <li key={k}><Icon name="check" size={15} /> {t(k)}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="score-block" variant="left">
+        <div className="score-text">
+          <h2>{t('lb.scoreTitle')}</h2>
+          <p className="muted">{t('lb.scoreLead')}</p>
+          <p className="small score-note"><Icon name="info" size={14} /> {t('lb.scoreNote')}</p>
+        </div>
+        <ul className="score-bars">
+          {SCORE_PARTS.map((part, i) => (
+            <li key={part.key} style={{ '--d': `${i * 90}ms` } as React.CSSProperties}>
+              <span className="score-bar-label">{t(part.key)}</span>
+              <span className="score-bar"><i style={{ width: `${(part.max / 35) * 100}%` }} /></span>
+              <b className="num">{part.max}</b>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
+
+      <Reveal as="section" className="geo" variant="right">
+        <h2>{t('lb.geoTitle')}</h2>
+        <p className="muted">{t('lb.geoLead')}</p>
+        <ul className="geo-list">
+          {Object.entries(BY_COUNTRY)
+            .sort((a, b) => b[1] - a[1])
+            .map(([code, n]) => (
+              <li key={code} className="geo-item">
+                <span className="geo-flag">{COUNTRY_FLAG[code as keyof typeof COUNTRY_FLAG]}</span>
+                <b>{COUNTRY_LABELS[code as keyof typeof COUNTRY_LABELS]}</b>
+                <span className="small muted">
+                  {t('lb.geoPrograms', { n, word: plural(n, t('lv.progOne'), t('lv.progFew'), t('lv.progMany')) })}
+                </span>
+              </li>
+            ))}
+        </ul>
+      </Reveal>
+
+      <Reveal as="section" className="honest-block">
+        <h2>{t('lb.honestTitle')}</h2>
+        <div className="honest-grid">
+          {HONEST_POINTS.map((h) => (
+            <article key={h.t} className="honest-card">
+              <span className="honest-icon"><Icon name={h.icon} size={18} /></span>
+              <b>{t(h.t)}</b>
+              <p className="small muted">{t(h.x)}</p>
+            </article>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal as="section" className="final-cta" variant="scale">
+        <h2>{t('lb.ctaTitle')}</h2>
+        <p className="muted">{t('lb.ctaLead')}</p>
+        <div className="hero-cta">
+          <Button iconRight="arrow" onClick={() => setStarting('profile')}>{t('landing.ctaBuild')}</Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              dispatch({ type: 'saveProfile', profile: SAMPLE_PROFILE });
+              setStarting('sample');
+            }}
+          >
+            {t('landing.ctaSample')}
+          </Button>
+        </div>
+      </Reveal>
 
       <Reveal as="section" className="honesty" variant="scale">
         <Icon name="info" />

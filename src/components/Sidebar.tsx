@@ -88,6 +88,12 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-foot">
+        {state.profileDone && (
+          <a className="sidebar-me" href="#/me" title={t('me.nav')}>
+            <Icon name="academic" size={16} />
+            <span className="sidebar-label">{t('me.nav')}</span>
+          </a>
+        )}
         {state.profileDone && derived.next && (
           <a className="sidebar-next" href="#/next">
             <span className="small">{t('nav.nextStep')}</span>

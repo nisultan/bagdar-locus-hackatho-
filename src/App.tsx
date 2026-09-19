@@ -17,6 +17,7 @@ import { useLang } from './i18n/useLang';
 import { STAGES } from './stages';
 
 import { Legal } from './screens/Legal';
+import { Profile } from './screens/Profile';
 import { useStore } from './state/store';
 
 const SIDEBAR_KEY = 'bagdar.sidebar';
@@ -28,16 +29,17 @@ export default function App() {
   useLang(); // перерисовать всё дерево при смене языка
   // Правовые страницы живут вне маршрута: они не этап и не требуют анкеты.
   const legal = route.stage === 'privacy' || route.stage === 'terms' ? route.stage : null;
+  const aside = route.stage === 'me' ? 'me' : null;
   const known = STAGES.some((s) => s.id === route.stage);
   const needsProfile = !state.profileDone && !['start', 'profile'].includes(route.stage);
   const stage = !known ? 'start' : needsProfile ? 'profile' : route.stage;
 
   useEffect(() => {
-    if (legal) return;
+    if (legal || aside) return;
     if (!known) go('');
     else if (needsProfile) go('profile');
     else dispatch({ type: 'visit', stage });
-  }, [legal, known, needsProfile, stage, dispatch]);
+  }, [legal, aside, known, needsProfile, stage, dispatch]);
 
   const current = STAGES.findIndex((s) => s.id === stage);
 
@@ -97,7 +99,7 @@ export default function App() {
         </div>
       </header>
 
-      {!legal && (
+      {!legal && !aside && (
       <nav className="stepper" aria-label={t('nav.route')}>
         <ol>
           {STAGES.map((s, i) => {
@@ -126,15 +128,16 @@ export default function App() {
       </nav>
       )}
 
-      <main className="main" key={legal ?? stage}>
+      <main className="main" key={legal ?? aside ?? stage}>
         {legal && <Legal kind={legal} />}
-        {!legal && stage === 'start' && <Landing />}
-        {!legal && stage === 'profile' && <ProfileWizard step={Number(route.param) || 1} />}
-        {!legal && stage === 'diagnosis' && <Diagnosis />}
-        {!legal && stage === 'recs' && <Recommendations />}
-        {!legal && stage === 'compare' && <Compare />}
-        {!legal && stage === 'plan' && <RoadmapScreen />}
-        {!legal && stage === 'next' && <NextStep />}
+        {aside === 'me' && <Profile />}
+        {!legal && !aside && stage === 'start' && <Landing />}
+        {!legal && !aside && stage === 'profile' && <ProfileWizard step={Number(route.param) || 1} />}
+        {!legal && !aside && stage === 'diagnosis' && <Diagnosis />}
+        {!legal && !aside && stage === 'recs' && <Recommendations />}
+        {!legal && !aside && stage === 'compare' && <Compare />}
+        {!legal && !aside && stage === 'plan' && <RoadmapScreen />}
+        {!legal && !aside && stage === 'next' && <NextStep />}
       </main>
 
       <footer className="footer">
