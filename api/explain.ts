@@ -73,7 +73,13 @@ export default async function handler(req: any, res: any) {
             { role: 'user', parts: [{ text: `Данные (JSON):\n${JSON.stringify(body).slice(0, 6000)}` }] },
           ],
           generationConfig: {
-            maxOutputTokens: 700,
+            // Токены «размышления» Gemini 3 тратятся из этого же лимита, поэтому
+            // запас нужен с большим отрывом: при нехватке ответ обрывается
+            // на середине JSON, и разобрать его уже нельзя.
+            maxOutputTokens: 2048,
+            // Задача простая и структурированная — глубокое рассуждение только
+            // съедает бюджет и задержку.
+            thinkingLevel: 'minimal',
             temperature: 0.3,
             responseMimeType: 'application/json',
             responseSchema: RESPONSE_SCHEMA,
@@ -90,13 +96,19 @@ export default async function handler(req: any, res: any) {
       .trim();
     if (!text) return res.status(502).json({ error: 'Empty response' });
 
+    // Ответ мог оборваться по лимиту токенов — тогда это не наш формат,
+    // и честнее отдать ошибку: клиент покажет разбор по правилам, а не огрызок JSON.
+    const finish = data?.candidates?.[0]?.finishReason;
+    if (finish && finish !== 'STOP') return res.status(502).json({ error: `Incomplete response: ${finish}` });
+
     let advice: any;
     try {
       advice = JSON.parse(text);
     } catch {
-      // responseSchema обычно не даёт этому случиться, но если модель всё же
-      // вернула прозу — отдаём её как вердикт, чтобы не терять ответ целиком.
-      advice = { verdict: text.slice(0, 300), strengths: [], actions: [], watch: '', check: '' };
+      return res.status(502).json({ error: 'Malformed response' });
+    }
+    if (!advice || typeof advice.verdict !== 'string') {
+      return res.status(502).json({ error: 'Malformed response' });
     }
 
     // Подрезаем на сервере: длина — часть контракта с интерфейсом, а не пожелание.
