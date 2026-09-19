@@ -636,6 +636,9 @@ export const kk: Dict = {
   'landing.guest': 'немесе қонақ ретінде жалғастырыңыз — маршрут браузерде сақталады',
   'landing.signedIn': 'Сіз {name} ретінде кірдіңіз.',
   'landing.account': 'Аккаунт',
+  'nav.signIn': 'Кіру',
+  'nav.signInHint': 'немесе аккаунт құру',
+  'nav.accountIn': 'аккаунт',
   'app.account': 'Аккаунт',
   'app.signInCta': 'Кіру',
 

@@ -1355,6 +1355,26 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 .auth-wrap { max-width: 520px; margin: 0 auto; width: 100%; }
 
 /* Вход с главной: не обязательный шаг, поэтому строкой под основными кнопками. */
+.sidebar-account {
+  display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;
+  padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--line);
+  background: var(--surface-2); margin-bottom: 10px; transition: border-color 0.15s, background 0.15s;
+}
+.sidebar-account:hover { border-color: var(--primary); background: var(--primary-50); }
+.sidebar-account .sidebar-label { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.sidebar-account .sidebar-label b,
+.sidebar-account .sidebar-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-account .sidebar-label b { font-size: 14px; }
+.sidebar-account .sidebar-label span { font-size: 12px; }
+.sidebar-account svg { flex: none; color: var(--primary); }
+.sidebar-avatar {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--primary); color: var(--inverse-ink, #fff); font-weight: 700; font-size: 13px;
+}
+.sidebar-account-in { border-color: var(--primary); }
+/* В свёрнутом сайдбаре остаётся только иконка — подпись скрыта общим правилом */
+.sidebar-collapsed .sidebar-account { justify-content: center; padding: 10px 0; }
+
 .hero-auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .hero-auth .link-btn { font-size: 14px; }
 .hero-auth-dot { opacity: 0.5; }

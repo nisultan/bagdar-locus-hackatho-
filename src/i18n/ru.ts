@@ -634,6 +634,9 @@ export const ru = {
   'landing.guest': 'или продолжайте как гость — маршрут сохранится в браузере',
   'landing.signedIn': 'Вы вошли как {name}.',
   'landing.account': 'Аккаунт',
+  'nav.signIn': 'Войти',
+  'nav.signInHint': 'или создать аккаунт',
+  'nav.accountIn': 'аккаунт',
   'app.account': 'Аккаунт',
   'app.signInCta': 'Войти',
 

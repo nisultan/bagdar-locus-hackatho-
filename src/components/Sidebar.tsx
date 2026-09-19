@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { getSession, subscribeSession, type Session } from '../auth';
 import { STAGES } from '../stages';
 import { go } from '../router';
 import { useStore } from '../state/store';
@@ -110,10 +112,47 @@ export function Sidebar({
           </div>
         )}
 
+        <SidebarAccount />
+
         <div className="sidebar-tools">
           <LangToggle />
         </div>
       </div>
     </aside>
+  );
+}
+
+/**
+ * Вход в боковом меню. Шапка с кнопкой «Войти» на широких экранах скрыта, и без
+ * этой строки аккаунт было попросту негде найти: человек проходил весь маршрут
+ * гостем и не знал, что его можно сохранить.
+ */
+function SidebarAccount() {
+  const [session, setSession] = useState<Session | null>(getSession);
+  useEffect(() => {
+    const off = subscribeSession(setSession);
+    return () => { off(); };
+  }, []);
+
+  if (session) {
+    return (
+      <a className="sidebar-account sidebar-account-in" href="#/auth" title={session.email}>
+        <span className="sidebar-avatar" aria-hidden>{session.name.slice(0, 1).toUpperCase()}</span>
+        <span className="sidebar-label">
+          <b>{session.name.split(' ')[0]}</b>
+          <span className="small muted">{t('nav.accountIn')}</span>
+        </span>
+      </a>
+    );
+  }
+
+  return (
+    <a className="sidebar-account" href="#/auth">
+      <Icon name="user" size={16} />
+      <span className="sidebar-label">
+        <b>{t('nav.signIn')}</b>
+        <span className="small muted">{t('nav.signInHint')}</span>
+      </span>
+    </a>
   );
 }
