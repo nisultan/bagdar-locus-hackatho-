@@ -72,6 +72,7 @@ export function Sidebar({
                 <button
                   type="button"
                   disabled={locked}
+                  title={collapsed ? t(s.label) : undefined}
                   aria-current={i === current ? 'step' : undefined}
                   onClick={() => go(s.id === 'start' ? '' : s.id)}
                 >
@@ -79,7 +80,6 @@ export function Sidebar({
                     {isDone ? <Icon name="check" size={13} /> : locked ? <Icon name="lock" size={12} /> : i + 1}
                   </span>
                   <span className="sidebar-label">{t(s.label)}</span>
-                  {collapsed && <span className="sidebar-tip">{t(s.label)}</span>}
                 </button>
               </li>
             );
@@ -114,7 +114,6 @@ export function Sidebar({
         <div className="sidebar-tools">
           <ThemeToggle />
           <LangToggle />
-          <span className="small muted">{t('nav.tagline')}</span>
         </div>
       </div>
     </aside>

@@ -888,6 +888,7 @@ summary { transition: color 0.2s ease; cursor: pointer; }
     position: sticky; top: 0; height: 100vh; padding: 20px 18px;
     background: var(--surface); border-right: 1px solid var(--line);
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
   /* Логотип, ближайший шаг и переключатель темы переехали в сайдбар —
@@ -985,35 +986,24 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 @media (min-width: 1080px) {
   /* --- Свёрнутое состояние --- */
   .app-collapsed .sidebar { padding-left: 12px; padding-right: 12px; }
-  .app-collapsed .sidebar-head { justify-content: center; }
+  /* В 76px логотип и кнопка рядом не помещались — ставим их друг под друга. */
+  .app-collapsed .sidebar-head { flex-direction: column; justify-content: center; gap: 10px; }
   .app-collapsed .logo-word,
   .app-collapsed .sidebar-label,
   .app-collapsed .sidebar-next .small,
-  .app-collapsed .sidebar-progress-head,
-  .app-collapsed .sidebar-tools .small { display: none; }
+  .app-collapsed .sidebar-progress-head { display: none; }
 
   .app-collapsed .sidebar-logo { padding: 4px 0; }
   .app-collapsed .sidebar-stop button { justify-content: center; padding: 7px 0; }
   .app-collapsed .sidebar-route::before,
   .app-collapsed .sidebar-route::after { left: 50%; transform: translateX(-50%); }
 
-  .app-collapsed .sidebar-next { align-items: center; text-align: center; padding: 10px 8px; }
-  .app-collapsed .sidebar-next b {
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; font-size: 12px;
-  }
+  /* В 76px название задачи обрезалось до огрызка вроде «Талап рес…».
+     В свёрнутом виде блок прячем — этап «Келесі қадам» и так есть в списке. */
+  .app-collapsed .sidebar-next { display: none; }
   .app-collapsed .sidebar-tools { justify-content: center; }
 
-  /* В свёрнутом виде подпись этапа всплывает подсказкой у курсора */
-  .sidebar-tip {
-    position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%) translateX(-6px);
-    white-space: nowrap; padding: 6px 12px; border-radius: 8px; font-size: 14px;
-    background: var(--ink); color: var(--bg); pointer-events: none;
-    opacity: 0; transition: opacity 0.18s ease, transform 0.18s ease; z-index: 30;
-  }
-  .sidebar-stop button:hover .sidebar-tip,
-  .sidebar-stop button:focus-visible .sidebar-tip { opacity: 1; transform: translateY(-50%) translateX(0); }
-
+  
   /* Кнопка-стрелка разворота смотрит в сторону действия */
   .app-collapsed .sidebar-toggle svg { transform: none; }
 }
@@ -1242,4 +1232,16 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 @media (max-width: 860px) {
   .reveal-left,
   .reveal-right { transform: translateY(26px); }
+}
+
+/* ============ Свёрнутый сайдбар: ничего не должно вылезать вбок ============ */
+/* Переключатель языка показывает обе метки и в 76px не помещался —
+   в свёрнутом виде оставляем только текущий язык. */
+@media (min-width: 1080px) {
+  .app-collapsed .sidebar-tools { flex-direction: column; gap: 8px; }
+  .app-collapsed .lang-toggle-off { display: none; }
+  .app-collapsed .lang-toggle { padding: 2px; }
+  .app-collapsed .sidebar-progress .meter { width: 100%; }
+  .app-collapsed .sidebar,
+  .app-collapsed .sidebar * { max-width: 100%; }
 }
