@@ -188,10 +188,25 @@ button, input, select { font: inherit; color: inherit; }
 .label { font-weight: 600; font-size: 15px; }
 .hint { font-size: 14px; color: var(--muted); }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-input[type='text'], input:not([type]), input[type='number'], select {
-  min-height: 48px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); width: 100%;
+/* Перечисляем типы явно: email и password раньше сюда не попадали и рисовались
+   системным стилем браузера — на тёмной теме это выглядело чужеродно. */
+input[type='text'], input:not([type]), input[type='number'], input[type='email'],
+input[type='password'], input[type='tel'], input[type='url'], input[type='search'], select, textarea {
+  min-height: 48px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-2); color: var(--ink); width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-50); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+input:hover:not(:focus), select:hover:not(:focus) { border-color: var(--muted); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary); outline: none; background: var(--surface); box-shadow: 0 0 0 3px var(--primary-50);
+}
+/* Автозаполнение Chrome заливает поле своим жёлтым — возвращаем наши цвета. */
+input:-webkit-autofill, input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset;
+  caret-color: var(--ink);
+}
 input[type='range'] { width: 100%; accent-color: var(--primary); height: 28px; }
 .range-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
 
@@ -1338,6 +1353,12 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 @media (max-width: 620px) { .account-btn-text { display: none; } .account-btn { padding: 0 10px; } .account-btn-in { padding-left: 4px; } }
 
 .auth-wrap { max-width: 520px; margin: 0 auto; width: 100%; }
+
+/* Вход с главной: не обязательный шаг, поэтому строкой под основными кнопками. */
+.hero-auth { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.hero-auth .link-btn { font-size: 14px; }
+.hero-auth-dot { opacity: 0.5; }
+.hero-auth-in { display: inline-flex; align-items: center; gap: 6px; }
 .auth-card { display: flex; flex-direction: column; gap: 4px; }
 .auth-tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 999px; margin-bottom: 20px; }
 .auth-tab {
@@ -1345,11 +1366,37 @@ summary { transition: color 0.2s ease; cursor: pointer; }
   font-weight: 600; cursor: pointer; color: var(--muted);
 }
 .auth-tab.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
-.auth-password { display: flex; align-items: center; gap: 8px; }
-.auth-password input { flex: 1; }
+/* Кнопка «Показать» живёт внутри поля: снаружи она ломала ширину и выглядела
+   как отдельное действие формы. */
+.auth-password { position: relative; display: block; }
+.auth-password input { padding-right: 96px; }
+.auth-password .link-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  padding: 6px 10px; border-radius: 999px; font-size: 13px;
+}
+.auth-password .link-btn:hover { background: var(--primary-50); }
 .auth-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: 14px; }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.auth-google { display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 44px; }
+.auth-google { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-height: 44px; }
+
+/* Кнопка Google: нейтральная поверхность и фирменная «G» — так её узнают
+   с первого взгляда и не путают с основным действием формы. */
+.btn-google {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 48px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  background: #fff; color: #1f1f1f; border: 1.5px solid #dadce0;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  transition: box-shadow 0.15s, background 0.15s, border-color 0.15s, transform 0.05s;
+}
+.btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.25); }
+.btn-google:active { transform: translateY(1px); }
+:root[data-theme='dark'] .btn-google { background: #131a18; color: #e3e3e3; border-color: #3c4043; }
+:root[data-theme='dark'] .btn-google:hover { background: #1b2421; border-color: #5f6368; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .btn-google { background: #131a18; color: #e3e3e3; border-color: #3c4043; }
+  :root:not([data-theme='light']) .btn-google:hover { background: #1b2421; border-color: #5f6368; }
+}
+.btn-google svg { flex: none; }
 .auth-google-note { text-align: center; display: flex; align-items: center; gap: 6px; }
 .auth-foot { margin-top: 18px; }
 .auth-account { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }

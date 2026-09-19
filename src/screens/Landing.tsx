@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getSession, subscribeSession, type Session } from '../auth';
 import { CountUp, Reveal, useTilt } from '../components/motion';
 import { RouteLoader } from '../components/RouteLoader';
 import { ScrollPath } from '../components/ScrollPath';
@@ -95,6 +96,10 @@ export function Landing() {
                 </Button>
               </>
             )}
+          </div>
+
+          <div className="hero-auth rise" style={{ '--d': '245ms' } as React.CSSProperties}>
+            <HeroAuth />
           </div>
 
           <div className="hero-stats rise" style={{ '--d': '280ms' } as React.CSSProperties}>
@@ -253,5 +258,38 @@ export function Landing() {
         </p>
       </Reveal>
     </div>
+  );
+}
+
+/**
+ * Вход с главной. Сознательно строкой, а не кнопкой наравне с «Построить маршрут»:
+ * аккаунт здесь не обязателен, и предлагать его вперёд самого продукта — значит
+ * ставить барьер там, где его нет.
+ */
+function HeroAuth() {
+  const [session, setSession] = useState<Session | null>(getSession);
+  useEffect(() => {
+    const off = subscribeSession(setSession);
+    return () => { off(); };
+  }, []);
+
+  if (session) {
+    return (
+      <span className="hero-auth-in">
+        <Icon name="user" size={14} />
+        {t('landing.signedIn', { name: session.name })}
+        <button className="link-btn" onClick={() => go('auth')}>{t('landing.account')}</button>
+      </span>
+    );
+  }
+
+  return (
+    <>
+      <button className="link-btn" onClick={() => go('auth')}>{t('landing.signIn')}</button>
+      <span className="hero-auth-dot">·</span>
+      <button className="link-btn" onClick={() => go('signup')}>{t('landing.signUp')}</button>
+      <span className="hero-auth-dot">·</span>
+      <span>{t('landing.guest')}</span>
+    </>
   );
 }

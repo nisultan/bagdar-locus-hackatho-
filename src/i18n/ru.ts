@@ -629,6 +629,11 @@ export const ru = {
   'ai.localNoGaps': 'Пробелов по требованиям нет — займитесь качеством документов',
   'ai.localNoGrant': 'Грантов на этой программе почти нет — нужен свой бюджет',
   'ai.localCheck': 'Порядок поступления на официальном сайте: {entrance}',
+  'landing.signIn': 'Войти',
+  'landing.signUp': 'Создать аккаунт',
+  'landing.guest': 'или продолжайте как гость — маршрут сохранится в браузере',
+  'landing.signedIn': 'Вы вошли как {name}.',
+  'landing.account': 'Аккаунт',
   'app.account': 'Аккаунт',
   'app.signInCta': 'Войти',
 

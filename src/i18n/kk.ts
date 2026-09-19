@@ -631,6 +631,11 @@ export const kk: Dict = {
   'ai.localNoGaps': 'Талаптар бойынша олқылық жоқ — құжаттар сапасына көңіл бөліңіз',
   'ai.localNoGrant': 'Бұл бағдарламада грант жоққа тән — өз бюджетіңіз керек',
   'ai.localCheck': 'Ресми сайттағы қабылдау тәртібі: {entrance}',
+  'landing.signIn': 'Кіру',
+  'landing.signUp': 'Аккаунт құру',
+  'landing.guest': 'немесе қонақ ретінде жалғастырыңыз — маршрут браузерде сақталады',
+  'landing.signedIn': 'Сіз {name} ретінде кірдіңіз.',
+  'landing.account': 'Аккаунт',
   'app.account': 'Аккаунт',
   'app.signInCta': 'Кіру',
 

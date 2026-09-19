@@ -4,7 +4,7 @@ import {
   signIn, signInWithGoogle, signOut, signUp, subscribeSession,
   type AuthError, type Session,
 } from '../auth';
-import { Button, Icon, Meter, PageHead } from '../components/ui';
+import { Button, GoogleMark, Icon, Meter, PageHead } from '../components/ui';
 import { getSyncStatus, subscribeSync, type SyncStatus } from '../state/sync';
 import { t } from '../i18n';
 import { go } from '../router';
@@ -195,7 +195,9 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
 
         <div className="auth-google">
           {cloud ? (
-            <Button variant="secondary" full icon="user" onClick={google}>{t('auth.googleCta')}</Button>
+            <button type="button" className="btn-google" onClick={google}>
+              <GoogleMark /> {t('auth.googleCta')}
+            </button>
           ) : (
             <div ref={googleBox} />
           )}

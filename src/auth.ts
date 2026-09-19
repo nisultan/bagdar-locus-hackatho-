@@ -127,20 +127,43 @@ function toSession(user: SupaUser): Session {
 }
 
 /**
- * Supabase возвращает токены в хеше URL (#access_token=...), а у нас hash-роутер.
- * Поэтому разбираем их руками, кладём сессию и возвращаем пользователя на #/auth,
- * чтобы токен не остался в адресной строке и в истории.
+ * Возврат после входа через Google или ссылки из письма.
+ *
+ * Supabase умеет два формата ответа, и нам нужны оба:
+ *   PKCE      — ?code=... в query (так работает supabase-js по умолчанию);
+ *   implicit  — #access_token=...&refresh_token=... в хеше.
+ *
+ * Хеш здесь занят роутером, поэтому адрес приходит вида `#/auth#access_token=...`.
+ * Наивный разбор всего хеша ломался: первым ключом получался «/auth#access_token»,
+ * токен не находился, и человек возвращался на сайт как будто не вошёл.
+ * Берём часть после ПОСЛЕДНЕГО «#» — это и есть ответ Supabase.
  */
 async function consumeOAuthRedirect(client: SupabaseLike) {
-  const raw = window.location.hash.replace(/^#/, '');
-  if (!raw.includes('access_token=')) return;
-  const params = new URLSearchParams(raw);
+  const url = new URL(window.location.href);
+
+  const code = url.searchParams.get('code');
+  if (code) {
+    await client.auth.exchangeCodeForSession(code);
+    return cleanUrl();
+  }
+
+  const hash = window.location.hash;
+  const lastHash = hash.lastIndexOf('#');
+  const fragment = lastHash >= 0 ? hash.slice(lastHash + 1) : '';
+  if (!fragment.includes('access_token=')) return;
+
+  const params = new URLSearchParams(fragment);
   const access_token = params.get('access_token');
   const refresh_token = params.get('refresh_token');
   if (access_token && refresh_token) {
     await client.auth.setSession({ access_token, refresh_token });
   }
-  window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/auth');
+  cleanUrl();
+}
+
+/** Убираем токен или код из адреса и истории — там им не место. */
+function cleanUrl() {
+  window.history.replaceState(null, '', window.location.pathname + '#/auth');
 }
 
 type SupabaseLike = Awaited<NonNullable<ReturnType<typeof getSupabase>>>;
