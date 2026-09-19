@@ -87,7 +87,18 @@ export default async function handler(req: any, res: any) {
         }),
       },
     );
-    if (!r.ok) return res.status(502).json({ error: 'Upstream error' });
+    if (!r.ok) {
+      // Текст ошибки Google отдаём наружу: в нём нет ключа, зато видно причину
+      // (неверный ключ, снятая с обслуживания модель, превышение квоты).
+      const detail = await r.text().catch(() => '');
+      let message = detail.slice(0, 300);
+      try {
+        message = JSON.parse(detail)?.error?.message ?? message;
+      } catch {
+        /* не JSON — оставляем как есть */
+      }
+      return res.status(502).json({ error: 'Upstream error', status: r.status, model, detail: message });
+    }
 
     const data = await r.json();
     const text = (data?.candidates?.[0]?.content?.parts ?? [])
