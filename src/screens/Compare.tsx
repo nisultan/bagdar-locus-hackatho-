@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { BandBadge, Button, Chip, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
-import { COUNTRY_FLAG, COUNTRY_LABELS } from '../data/options';
+import { BandBadge, Button, Chip, CountryTag, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
+import { COUNTRY_LABELS } from '../data/options';
 import { usd } from '../engine/format';
 import { effectiveIelts } from '../engine/recommend';
 import { t } from '../i18n';
@@ -42,7 +42,7 @@ export function Compare() {
     },
     { label: t('cp.entrance'), value: (r) => r.program.entrance },
     { label: t('cp.deadline'), value: (r) => <>{r.program.deadline.label} <EstimateNote /></> },
-    { label: t('cp.city'), value: (r) => `${COUNTRY_FLAG[r.program.country]} ${r.program.city}, ${COUNTRY_LABELS[r.program.country]}` },
+    { label: t('cp.city'), value: (r) => <><CountryTag code={r.program.country} /> {r.program.city}, {COUNTRY_LABELS[r.program.country]}</> },
     { label: t('cp.gaps'), value: (r) => (r.gaps.length ? r.gaps.join('; ') : t('cp.noGaps')) , best: (r) => r.gaps.length, lowerIsBetter: true },
   ];
 

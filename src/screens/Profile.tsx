@@ -1,7 +1,7 @@
 import { Reveal } from '../components/motion';
-import { Button, Icon, PageHead } from '../components/ui';
+import { Button, CountryTag, Icon, PageHead } from '../components/ui';
 import {
-  ACHIEVEMENT_LABELS, COUNTRY_FLAG, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_EMOJI, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
+  ACHIEVEMENT_LABELS, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_ICON, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
 } from '../data/options';
 import { usd } from '../engine/format';
 import { effectiveIelts } from '../engine/recommend';
@@ -49,7 +49,7 @@ export function Profile() {
           <div className="me-chips">
             {p.interests.map((f, i) => (
               <span key={f} className={`me-chip${i === 0 ? ' me-chip-main' : ''}`}>
-                {FIELD_EMOJI[f]} {FIELD_LABELS[f]}
+                <Icon name={FIELD_ICON[f]} size={16} /> {FIELD_LABELS[f]}
                 {i === 0 && <b className="me-chip-tag">{t('wz.mainTag')}</b>}
               </span>
             ))}
@@ -73,7 +73,7 @@ export function Profile() {
               <span className="me-chip">{t('wz.anyCountry')}</span>
             ) : (
               p.countries.map((c) => (
-                <span key={c} className="me-chip">{COUNTRY_FLAG[c]} {COUNTRY_LABELS[c]}</span>
+                <span key={c} className="me-chip"><CountryTag code={c} /> {COUNTRY_LABELS[c]}</span>
               ))
             )}
           </div>

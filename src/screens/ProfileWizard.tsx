@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { RouteLoader } from '../components/RouteLoader';
-import { Button, Chip, Icon } from '../components/ui';
+import { Button, Chip, CountryTag, Icon } from '../components/ui';
 import {
-  ACHIEVEMENT_LABELS, COUNTRY_FLAG, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_EMOJI, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
+  ACHIEVEMENT_LABELS, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_ICON, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
 } from '../data/options';
 import { usd } from '../engine/format';
 import { t } from '../i18n';
@@ -133,7 +133,7 @@ export function ProfileWizard({ step }: { step: number }) {
                     aria-pressed={idx >= 0}
                     onClick={() => set('interests', toggle(p.interests, f, 3))}
                   >
-                    <span className="field-emoji" aria-hidden>{FIELD_EMOJI[f]}</span>
+                    <span className="field-icon" aria-hidden><Icon name={FIELD_ICON[f]} size={22} /></span>
                     <span>{FIELD_LABELS[f]}</span>
                     {idx >= 0 && <span className="field-rank">{idx === 0 ? t('wz.mainTag') : `#${idx + 1}`}</span>}
                   </button>
@@ -194,7 +194,7 @@ export function ProfileWizard({ step }: { step: number }) {
                 <Chip selected={p.countries.length === 0} onClick={() => set('countries', [])}>{t('wz.anyCountry')}</Chip>
                 {(Object.keys(COUNTRY_LABELS) as CountryCode[]).map((c) => (
                   <Chip key={c} selected={p.countries.includes(c)} onClick={() => set('countries', toggle(p.countries, c, 10))}>
-                    {COUNTRY_FLAG[c]} {COUNTRY_LABELS[c]}
+                    <CountryTag code={c} /> {COUNTRY_LABELS[c]}
                   </Chip>
                 ))}
               </div>

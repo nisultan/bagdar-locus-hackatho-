@@ -22,14 +22,15 @@ export const FIELD_LABELS: Record<Field, string> = localized<Field>({
   design: 'field.design',
 });
 
-export const FIELD_EMOJI: Record<Field, string> = {
-  cs: '💻',
-  engineering: '⚙️',
-  business: '📈',
-  medicine: '🩺',
-  science: '🔬',
-  social: '🌍',
-  design: '🎨',
+/** Имя SVG-иконки направления в общем наборе (см. Icon). */
+export const FIELD_ICON: Record<Field, string> = {
+  cs: 'f-cs',
+  engineering: 'f-engineering',
+  business: 'f-business',
+  medicine: 'f-medicine',
+  science: 'f-science',
+  social: 'f-social',
+  design: 'f-design',
 };
 
 export const COUNTRY_LABELS: Record<CountryCode, string> = localized<CountryCode>({

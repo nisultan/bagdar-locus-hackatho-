@@ -83,7 +83,7 @@ npm test         # юнит-тесты движка
 npm run build    # сборка в dist/
 ```
 
-**Деплой на Vercel:** импортировать репозиторий → Framework: Vite → (опционально) переменная `ANTHROPIC_API_KEY` для AI-разбора. Без ключа всё работает, AI-разбор заменяется разбором по правилам. Статическая сборка (`dist/`) также работает на GitHub Pages / Netlify, но без AI-функции.
+**Деплой на Vercel:** импортировать репозиторий → Framework: Vite → (опционально) переменная `GEMINI_API_KEY` для AI-разбора. Без ключа всё работает, AI-разбор заменяется разбором по правилам. Статическая сборка (`dist/`) также работает на GitHub Pages / Netlify, но без AI-функции.
 
 ## Тестовый сценарий для жюри
 
@@ -110,7 +110,7 @@ npm run build    # сборка в dist/
 
 | Что | Где используется | Раскрытие |
 |-----|------------------|-----------|
-| Claude (Anthropic Messages API) | `api/explain.ts` — текст персонального разбора | опционально, с фолбэком на правила |
+| Gemini (Google Generative Language API, `gemini-2.5-flash`) | `api/explain.ts` — текст персонального разбора | опционально, с фолбэком на правила |
 | React, React DOM | UI | open source, MIT |
 | Vite, TypeScript, Vitest, @vitejs/plugin-react | сборка и тесты | open source, MIT / Apache-2.0 |
 | Шрифт Onest (Google Fonts) | типографика | SIL OFL |

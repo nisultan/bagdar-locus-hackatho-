@@ -67,6 +67,12 @@ export default function App() {
     <div className={`app${collapsed ? ' app-collapsed' : ''}`}>
       <Sidebar stage={stage} collapsed={collapsed} onToggle={toggleSidebar} />
 
+      {/* На широких экранах шапки нет, поэтому переключатель темы живёт
+          отдельным углом — он нужен на любом экране, а не только на главной. */}
+      <div className="corner-tools">
+        <ThemeToggle />
+      </div>
+
       <div className="app-body">
       <header className="topbar">
         <a className="logo" href="#/">

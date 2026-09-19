@@ -1,5 +1,6 @@
 import { FIELD_LABELS, COUNTRY_LABELS } from './data/options';
 import { BAND_LABELS } from './engine/recommend';
+import { getLang } from './i18n';
 import type { Profile, Recommendation } from './types';
 
 export interface AdviceResult {
@@ -22,6 +23,7 @@ export function localAdvice(p: Profile, r: Recommendation): string {
 
 export async function fetchAdvice(p: Profile, r: Recommendation): Promise<AdviceResult> {
   const payload = {
+    lang: getLang(),
     profile: {
       grade: p.grade,
       interests: p.interests.map((f) => FIELD_LABELS[f]),

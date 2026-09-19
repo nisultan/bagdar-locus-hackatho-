@@ -23,6 +23,11 @@
   --warn: #c2571a;
   --warn-50: #fcebdd;
   --danger: #b42318;
+  /* Инвертированная поверхность (плашки «наоборот»): в светлой теме тёмная,
+     в тёмной — светлая. Без этой пары `background: var(--ink); color: #fff`
+     в тёмной теме давал белый текст на светлом фоне. */
+  --inverse-bg: #17231f;
+  --inverse-ink: #f4f1ea;
   --radius: 18px;
   --radius-sm: 12px;
   --shadow: 0 1px 2px rgba(23, 35, 31, 0.04), 0 8px 24px rgba(23, 35, 31, 0.06);
@@ -333,7 +338,7 @@ input[type='range'] { width: 100%; accent-color: var(--primary); height: 28px; }
 }
 .field-card:hover { border-color: var(--primary); }
 .field-card.on { border-color: var(--primary); background: var(--primary-50); }
-.field-emoji { font-size: 24px; }
+.field-icon { display: grid; place-items: center; color: var(--primary); }
 .field-rank { position: absolute; top: -9px; right: 10px; background: var(--primary); color: #fff; font-size: 11px; padding: 1px 8px; border-radius: 99px; }
 @media (max-width: 560px) {
   .wizard-card { padding: 20px 16px; }
@@ -390,12 +395,12 @@ input[type='range'] { width: 100%; accent-color: var(--primary); height: 28px; }
 
 .sticky-bar {
   position: fixed; left: 50%; bottom: 16px; transform: translate(-50%, 140%); z-index: 30;
-  display: flex; align-items: center; gap: 16px; background: var(--ink); color: #fff; padding: 10px 10px 10px 20px; border-radius: 999px;
+  display: flex; align-items: center; gap: 16px; background: var(--inverse-bg); color: var(--inverse-ink); padding: 10px 10px 10px 20px; border-radius: 999px;
   box-shadow: 0 10px 30px rgba(0,0,0,.2); transition: transform 0.25s ease; width: max-content; max-width: calc(100% - 24px);
 }
 .sticky-bar.show { transform: translate(-50%, 0); }
 .sticky-actions { display: flex; gap: 6px; }
-.sticky-bar .btn-secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+.sticky-bar .btn-secondary { background: transparent; color: var(--inverse-ink); border-color: color-mix(in srgb, var(--inverse-ink) 40%, transparent); }
 .sticky-bar .btn-primary { background: var(--accent); color: var(--accent-ink); }
 @media (max-width: 520px) {
   .sticky-bar { flex-direction: column; gap: 8px; border-radius: 20px; padding: 10px; width: calc(100% - 24px); }
@@ -419,7 +424,7 @@ input[type='range'] { width: 100%; accent-color: var(--primary); height: 28px; }
 @media (max-width: 680px) { .plan-summary { grid-template-columns: 1fr; } }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .filter { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; font-size: 14px; font-weight: 500; }
-.filter.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.filter.on { background: var(--inverse-bg); color: var(--inverse-ink); border-color: var(--inverse-bg); }
 .filters .toggle { margin-left: auto; }
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
 .timeline-month { position: relative; padding-left: 28px; }
@@ -655,6 +660,8 @@ summary { transition: color 0.2s ease; cursor: pointer; }
     --warn: #f0a166;
     --warn-50: #33220f;
     --danger: #f2837a;
+    --inverse-bg: #e8efec;
+    --inverse-ink: #0c1512;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
@@ -684,6 +691,8 @@ summary { transition: color 0.2s ease; cursor: pointer; }
   --warn: #f0a166;
   --warn-50: #33220f;
   --danger: #f2837a;
+  --inverse-bg: #e8efec;
+  --inverse-ink: #0c1512;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
@@ -1127,7 +1136,7 @@ summary { transition: color 0.2s ease; cursor: pointer; }
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease;
 }
 .geo-item:hover { transform: translateY(-3px); border-color: var(--primary); }
-.geo-flag { font-size: 20px; line-height: 1; }
+
 .geo-item b { flex: 1; min-width: 0; font-size: 15px; }
 
 /* --- Чего мы не делаем --- */
@@ -1244,4 +1253,31 @@ summary { transition: color 0.2s ease; cursor: pointer; }
   .app-collapsed .sidebar-progress .meter { width: 100%; }
   .app-collapsed .sidebar,
   .app-collapsed .sidebar * { max-width: 100%; }
+}
+
+/* Иконка направления в чипе профиля выравнивается по тексту */
+.me-chip svg { flex: none; color: var(--primary); }
+.me-chip-main svg { color: inherit; }
+
+/* Бейдж кода страны вместо эмодзи-флага */
+.country-tag {
+  display: inline-grid; place-items: center; flex: none;
+  min-width: 26px; height: 18px; padding: 0 5px;
+  border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--ink-2); font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums; vertical-align: 1px;
+}
+.me-chip-main .country-tag,
+.chip-on .country-tag { background: var(--surface); border-color: currentColor; color: inherit; }
+.geo-item .country-tag { min-width: 30px; height: 22px; font-size: 11.5px; }
+
+/* ============ Угловые контролы ============ */
+.corner-tools { display: none; }
+@media (min-width: 1080px) {
+  .corner-tools {
+    display: flex; gap: 8px; align-items: center;
+    position: fixed; top: 16px; right: 20px; z-index: 40;
+  }
+  /* Кнопка стоит над контентом, поэтому ей нужен собственный фон */
+  .corner-tools .theme-toggle { background: var(--surface); box-shadow: var(--shadow); }
 }

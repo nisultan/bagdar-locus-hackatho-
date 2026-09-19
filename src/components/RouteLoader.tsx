@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const reduced = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,7 +55,10 @@ export function RouteLoader({ steps, onDone }: { steps: LoaderStep[]; onDone: ()
 
   if (reduced()) return null;
 
-  return (
+  // Рендерим в body: переключатель языка живёт в сайдбаре, а у него
+  // position: sticky — это всегда новый stacking context, и оверлей оставался
+  // запертым внутри него, размывая только колонку навигации.
+  return createPortal(
     <div className="route-loader" role="status" aria-live="polite">
       <div className="route-loader-card">
         <svg className="route-loader-art" viewBox="0 0 104 104" aria-hidden>
@@ -74,6 +78,7 @@ export function RouteLoader({ steps, onDone }: { steps: LoaderStep[]; onDone: ()
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

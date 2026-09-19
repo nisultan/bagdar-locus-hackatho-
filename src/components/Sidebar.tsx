@@ -1,7 +1,6 @@
 import { STAGES } from '../stages';
 import { go } from '../router';
 import { useStore } from '../state/store';
-import { ThemeToggle } from './ThemeToggle';
 import { t } from '../i18n';
 import { LangToggle } from './LangToggle';
 import { Icon } from './ui';
@@ -112,7 +111,6 @@ export function Sidebar({
         )}
 
         <div className="sidebar-tools">
-          <ThemeToggle />
           <LangToggle />
         </div>
       </div>

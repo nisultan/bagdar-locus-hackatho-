@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { CountUp, Reveal, useTilt } from '../components/motion';
 import { RouteLoader } from '../components/RouteLoader';
 import { ScrollPath } from '../components/ScrollPath';
-import { Button, CHECKED_ON, Icon } from '../components/ui';
+import { Button, CHECKED_ON, CountryTag, Icon } from '../components/ui';
 import { SAMPLE_PROFILE } from '../data/options';
-import { COUNTRY_FLAG, COUNTRY_LABELS } from '../data/options';
+import { COUNTRY_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { plural, t } from '../i18n';
 import { go } from '../router';
@@ -205,7 +205,7 @@ export function Landing() {
             .sort((a, b) => b[1] - a[1])
             .map(([code, n]) => (
               <li key={code} className="geo-item">
-                <span className="geo-flag">{COUNTRY_FLAG[code as keyof typeof COUNTRY_FLAG]}</span>
+                <CountryTag code={code} />
                 <b>{COUNTRY_LABELS[code as keyof typeof COUNTRY_LABELS]}</b>
                 <span className="small muted">
                   {t('lb.geoPrograms', { n, word: plural(n, t('lv.progOne'), t('lv.progFew'), t('lv.progMany')) })}

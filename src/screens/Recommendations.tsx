@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { fetchAdvice, type AdviceResult } from '../ai';
-import { BandBadge, Button, Chip, EstimateNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
+import { BandBadge, Button, Chip, CountryTag, EstimateNote, Icon, Meter, PageHead, ScoreRing, SourceLink } from '../components/ui';
 import { COUNTRY_FLAG, COUNTRY_LABELS, FIELD_LABELS } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { usd } from '../engine/format';
@@ -154,7 +154,7 @@ function RecCard({ r, rank, unlocked = false }: { r: Recommendation; rank: numbe
           </div>
           <h2>{p.university}</h2>
           <p className="muted">{p.program}</p>
-          <p className="small">{COUNTRY_FLAG[p.country]} {p.city}, {COUNTRY_LABELS[p.country]} · {p.language.map((l) => l.toUpperCase()).join(' / ')}</p>
+          <p className="small"><CountryTag code={p.country} /> {p.city}, {COUNTRY_LABELS[p.country]} · {p.language.map((l) => l.toUpperCase()).join(' / ')}</p>
         </div>
       </div>
 
@@ -304,7 +304,7 @@ function WhatIf() {
               <Chip selected={p.countries.length === 0} onClick={() => save({ countries: [] })}>{t('rc.anyCountry')}</Chip>
               {(Object.keys(COUNTRY_LABELS) as CountryCode[]).map((c) => (
                 <Chip key={c} selected={p.countries.includes(c)} onClick={() => save({ countries: p.countries.includes(c) ? p.countries.filter((x) => x !== c) : [...p.countries, c] })}>
-                  {COUNTRY_FLAG[c]} {COUNTRY_LABELS[c]}
+                  <CountryTag code={c} /> {COUNTRY_LABELS[c]}
                 </Chip>
               ))}
             </div>

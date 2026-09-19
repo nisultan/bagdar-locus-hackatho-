@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import { diagnose, type Diagnosis } from '../engine/diagnose';
+import { useLang } from '../i18n/useLang';
 import { leversFor } from '../engine/leverage';
 import { recommend, type RecommendResult } from '../engine/recommend';
 import { buildRoadmap, nextTask, type Roadmap } from '../engine/roadmap';
@@ -139,6 +140,10 @@ const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, load);
+  // Движок строит причины, пробелы и задачи плана текстом на текущем языке,
+  // поэтому смена языка обязана пересчитать derived — иначе интерфейс
+  // переключается, а объяснения остаются на старом языке.
+  const lang = useLang();
 
   useEffect(() => {
     try {
@@ -165,7 +170,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       next: nextTask(roadmap.tasks, state.done),
       progress: { done: doneCount, total: roadmap.tasks.length },
     };
-  }, [state.profile, state.shortlist, state.done, state.preview]);
+  }, [state.profile, state.shortlist, state.done, state.preview, lang]);
 
   return <StoreCtx.Provider value={{ state, dispatch, derived }}>{children}</StoreCtx.Provider>;
 }
