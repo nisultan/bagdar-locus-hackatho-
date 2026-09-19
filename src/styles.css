@@ -1355,3 +1355,7 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 .auth-account { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .auth-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 .auth-skip { text-align: center; }
+
+.auth-notice { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--good); background: var(--good-50); padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; }
+.auth-notice svg { flex: none; margin-top: 2px; }
+.auth-forgot { text-align: center; margin-top: 10px; }

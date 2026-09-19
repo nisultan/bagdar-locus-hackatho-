@@ -1,30 +1,36 @@
 /**
- * Аккаунты без backend-сервера.
+ * Аккаунты: два режима с одним и тем же интерфейсом для экранов.
  *
- * Важное ограничение, о котором честно сказано и в интерфейсе: аккаунт живёт
- * только в этом браузере (localStorage). Это не «настоящая» авторизация — сервера,
- * который проверял бы пароль, здесь нет, и войти с другого устройства нельзя.
- * Когда появится backend, останется заменить реализацию функций ниже HTTP-запросами:
- * форма, состояние сессии и экраны менять не придётся.
+ *   «cloud» — заданы VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY: регистрация, вход,
+ *     подтверждение почты и вход через Google идут через Supabase Auth. Пароль
+ *     проверяет сервер, сессия переживает смену устройства, ID-токен Google
+ *     проверяется на стороне Supabase — а не в браузере.
  *
- * Пароль не хранится в открытом виде: держим PBKDF2-SHA256 (210 000 итераций,
- * рекомендация OWASP) со случайной солью на аккаунт. В браузере это не защищает
- * от того, кто уже получил доступ к устройству, но защищает пароль от повторного
- * использования, если кто-то заглянет в localStorage.
+ *   «local» — переменных нет (форк без ключей, офлайн-показ): аккаунт живёт в
+ *     localStorage этого браузера. Пароль хранится как PBKDF2-SHA256 (210 000
+ *     итераций, случайная соль). Это не замена серверу, а запасной путь, чтобы
+ *     демо не падало без ключей; интерфейс об этом честно предупреждает.
+ *
+ * Экраны знают только про функции ниже, поэтому режим можно переключать
+ * переменными окружения, не трогая UI.
  */
+import { cloudAuth, getSupabase } from './supabase';
 
 const ACCOUNTS_KEY = 'bagdar.accounts';
 const SESSION_KEY = 'bagdar.session';
 const ITERATIONS = 210_000;
 
 export type Provider = 'password' | 'google';
+export type AuthMode = 'cloud' | 'local';
+
+export const authMode = (): AuthMode => (cloudAuth() ? 'cloud' : 'local');
 
 export interface Account {
   id: string;
   email: string;
   name: string;
   provider: Provider;
-  salt?: string; // только для provider === 'password'
+  salt?: string; // только для локального режима
   hash?: string;
   createdAt: string;
 }
@@ -36,6 +42,12 @@ export interface Session {
   provider: Provider;
 }
 
+/** Регистрация в облаке может потребовать подтверждения почты — тогда сессии ещё нет. */
+export interface SignUpResult {
+  session: Session | null;
+  needsConfirmation: boolean;
+}
+
 export type AuthError =
   | 'auth.errEmail'
   | 'auth.errPasswordShort'
@@ -44,6 +56,9 @@ export type AuthError =
   | 'auth.errTaken'
   | 'auth.errNoUser'
   | 'auth.errWrongPassword'
+  | 'auth.errNotConfirmed'
+  | 'auth.errRateLimit'
+  | 'auth.errNetwork'
   | 'auth.errGoogleOff'
   | 'auth.errGoogleFailed'
   | 'auth.errStorage';
@@ -54,29 +69,12 @@ export class AuthFailure extends Error {
   }
 }
 
-// ---------- хранилище ----------
-
-function readAccounts(): Account[] {
-  try {
-    const raw = localStorage.getItem(ACCOUNTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? (parsed as Account[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeAccounts(list: Account[]) {
-  try {
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-  } catch {
-    throw new AuthFailure('auth.errStorage');
-  }
-}
+// ---------- сессия ----------
 
 const listeners = new Set<(s: Session | null) => void>();
+let current: Session | null = readStoredSession();
 
-export function getSession(): Session | null {
+function readStoredSession(): Session | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -87,7 +85,9 @@ export function getSession(): Session | null {
   }
 }
 
+/** Сессию кешируем в localStorage, чтобы шапка не мигала «Войти» при загрузке. */
 function setSession(s: Session | null) {
+  current = s;
   try {
     if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
     else localStorage.removeItem(SESSION_KEY);
@@ -97,16 +97,98 @@ function setSession(s: Session | null) {
   listeners.forEach((fn) => fn(s));
 }
 
+export function getSession(): Session | null {
+  return current;
+}
+
 export function subscribeSession(fn: (s: Session | null) => void) {
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
 
-export function signOut() {
-  setSession(null);
+// ---------- Supabase ----------
+
+interface SupaUser {
+  id: string;
+  email?: string;
+  app_metadata?: { provider?: string };
+  user_metadata?: { full_name?: string; name?: string };
 }
 
-// ---------- пароли ----------
+function toSession(user: SupaUser): Session {
+  const meta = user.user_metadata ?? {};
+  const email = user.email ?? '';
+  return {
+    userId: user.id,
+    email,
+    name: meta.full_name || meta.name || email.split('@')[0] || 'Профиль',
+    provider: user.app_metadata?.provider === 'google' ? 'google' : 'password',
+  };
+}
+
+/**
+ * Supabase возвращает токены в хеше URL (#access_token=...), а у нас hash-роутер.
+ * Поэтому разбираем их руками, кладём сессию и возвращаем пользователя на #/auth,
+ * чтобы токен не остался в адресной строке и в истории.
+ */
+async function consumeOAuthRedirect(client: SupabaseLike) {
+  const raw = window.location.hash.replace(/^#/, '');
+  if (!raw.includes('access_token=')) return;
+  const params = new URLSearchParams(raw);
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
+  if (access_token && refresh_token) {
+    await client.auth.setSession({ access_token, refresh_token });
+  }
+  window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/auth');
+}
+
+type SupabaseLike = Awaited<NonNullable<ReturnType<typeof getSupabase>>>;
+
+let bootstrapped: Promise<SupabaseLike | null> | null = null;
+
+/**
+ * Подключаем Supabase при первом обращении: подхватываем токены из редиректа,
+ * сверяем сохранённую сессию с сервером и подписываемся на её изменения.
+ */
+function bootstrapCloud(): Promise<SupabaseLike | null> {
+  const pending = getSupabase();
+  if (!pending) return Promise.resolve(null);
+  if (!bootstrapped) {
+    bootstrapped = pending.then(async (client) => {
+      await consumeOAuthRedirect(client);
+      client.auth.onAuthStateChange((_event, session) => {
+        setSession(session ? toSession(session.user as SupaUser) : null);
+      });
+      const { data } = await client.auth.getSession();
+      setSession(data.session ? toSession(data.session.user as SupaUser) : null);
+      return client;
+    });
+  }
+  return bootstrapped;
+}
+
+// Сессию сверяем с сервером в простое после загрузки: до этого шапка показывает
+// закешированный аккаунт, поэтому подключение SDK ничего не задерживает.
+if (cloudAuth() && typeof window !== 'undefined') {
+  const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+  if (idle) idle(() => void bootstrapCloud());
+  else window.setTimeout(() => void bootstrapCloud(), 1200);
+}
+
+/** Тексты ошибок Supabase — в наши коды, чтобы интерфейс говорил по-человечески. */
+function mapSupabaseError(message: string): AuthError {
+  const m = message.toLowerCase();
+  if (m.includes('invalid login credentials')) return 'auth.errWrongPassword';
+  if (m.includes('email not confirmed')) return 'auth.errNotConfirmed';
+  if (m.includes('already registered') || m.includes('already been registered')) return 'auth.errTaken';
+  if (m.includes('rate limit') || m.includes('too many')) return 'auth.errRateLimit';
+  if (m.includes('password')) return 'auth.errPasswordShort';
+  if (m.includes('failed to fetch') || m.includes('network')) return 'auth.errNetwork';
+  return 'auth.errNetwork';
+}
+
+// ---------- пароли (локальный режим) ----------
 
 const enc = new TextEncoder();
 const toHex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -124,6 +206,24 @@ function equalHashes(a: string, b: string): boolean {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
+}
+
+function readAccounts(): Account[] {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as Account[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAccounts(list: Account[]) {
+  try {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+  } catch {
+    throw new AuthFailure('auth.errStorage');
+  }
 }
 
 // ---------- валидация ----------
@@ -151,20 +251,36 @@ export function passwordStrength(password: string): number {
   return Math.min(score, 3);
 }
 
-// ---------- регистрация и вход ----------
-
 const normalize = (email: string) => email.trim().toLowerCase();
 
-export async function signUp(email: string, password: string, name: string): Promise<Session> {
+// ---------- регистрация и вход ----------
+
+export async function signUp(email: string, password: string, name: string): Promise<SignUpResult> {
   const emailError = validateEmail(email);
   if (emailError) throw new AuthFailure(emailError);
   const passwordError = validatePassword(password);
   if (passwordError) throw new AuthFailure(passwordError);
   if (name.trim().length < 2) throw new AuthFailure('auth.errNameShort');
 
+  const client = await bootstrapCloud();
+  if (client) {
+    const { data, error } = await client.auth.signUp({
+      email: normalize(email),
+      password,
+      options: {
+        data: { full_name: name.trim() },
+        emailRedirectTo: `${window.location.origin}${window.location.pathname}#/auth`,
+      },
+    });
+    if (error) throw new AuthFailure(mapSupabaseError(error.message));
+    if (!data.session) return { session: null, needsConfirmation: true };
+    const session = toSession(data.session.user as SupaUser);
+    setSession(session);
+    return { session, needsConfirmation: false };
+  }
+
   const accounts = readAccounts();
   if (accounts.some((a) => a.email === normalize(email))) throw new AuthFailure('auth.errTaken');
-
   const salt = toHex(crypto.getRandomValues(new Uint8Array(16)).buffer);
   const account: Account = {
     id: crypto.randomUUID(),
@@ -178,10 +294,19 @@ export async function signUp(email: string, password: string, name: string): Pro
   writeAccounts([...accounts, account]);
   const session: Session = { userId: account.id, email: account.email, name: account.name, provider: 'password' };
   setSession(session);
-  return session;
+  return { session, needsConfirmation: false };
 }
 
 export async function signIn(email: string, password: string): Promise<Session> {
+  const client = await bootstrapCloud();
+  if (client) {
+    const { data, error } = await client.auth.signInWithPassword({ email: normalize(email), password });
+    if (error) throw new AuthFailure(mapSupabaseError(error.message));
+    const session = toSession(data.user as SupaUser);
+    setSession(session);
+    return session;
+  }
+
   const account = readAccounts().find((a) => a.email === normalize(email));
   if (!account || !account.salt || !account.hash) throw new AuthFailure('auth.errNoUser');
   const hash = await derive(password, account.salt);
@@ -191,17 +316,50 @@ export async function signIn(email: string, password: string): Promise<Session> 
   return session;
 }
 
+export async function signOut() {
+  const client = await bootstrapCloud();
+  if (client) await client.auth.signOut();
+  setSession(null);
+}
+
+/** Письмо со ссылкой на сброс пароля. Доступно только в облачном режиме. */
+export async function resetPassword(email: string): Promise<void> {
+  const client = await bootstrapCloud();
+  if (!client) throw new AuthFailure('auth.errNoUser');
+  const emailError = validateEmail(email);
+  if (emailError) throw new AuthFailure(emailError);
+  const { error } = await client.auth.resetPasswordForEmail(normalize(email), {
+    redirectTo: `${window.location.origin}${window.location.pathname}#/auth`,
+  });
+  if (error) throw new AuthFailure(mapSupabaseError(error.message));
+}
+
 // ---------- Google ----------
 
 export const GOOGLE_CLIENT_ID: string =
   (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_GOOGLE_CLIENT_ID ?? '';
-export const googleEnabled = () => GOOGLE_CLIENT_ID.length > 0;
 
 /**
- * Разбор ID-токена только ради имени и почты для интерфейса.
- * ВАЖНО: подпись токена здесь НЕ проверяется — в браузере это и невозможно сделать
- * безопасно. Как только появится backend, токен нужно отправлять на сервер и
- * проверять там (google-auth-library / tokeninfo), иначе вход можно подделать.
+ * Через Supabase Google работает без отдельного client ID в коде: ID и secret
+ * вписываются в панели Supabase, а токен проверяется на их сервере.
+ */
+export const googleEnabled = () => cloudAuth() || GOOGLE_CLIENT_ID.length > 0;
+
+export async function signInWithGoogle(): Promise<void> {
+  const client = await bootstrapCloud();
+  if (!client) throw new AuthFailure('auth.errGoogleOff');
+  const { error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}${window.location.pathname}#/auth` },
+  });
+  if (error) throw new AuthFailure('auth.errGoogleFailed');
+}
+
+/**
+ * Запасной путь для режима без Supabase: кнопка Google Identity Services.
+ * ВАЖНО: подпись ID-токена здесь не проверяется — в браузере это невозможно сделать
+ * безопасно, поэтому такой вход годится только для демонстрации интерфейса.
+ * Настоящая проверка живёт в облачном режиме, на стороне Supabase.
  */
 function decodeIdToken(jwt: string): { email?: string; name?: string; sub?: string } {
   const payload = jwt.split('.')[1];
@@ -215,7 +373,7 @@ let scriptPromise: Promise<void> | null = null;
 function loadGoogleScript(): Promise<void> {
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise((resolve, reject) => {
-    if ((window as any).google?.accounts?.id) return resolve();
+    if ((window as unknown as { google?: unknown }).google) return resolve();
     const s = document.createElement('script');
     s.src = 'https://accounts.google.com/gsi/client';
     s.async = true;
@@ -227,11 +385,10 @@ function loadGoogleScript(): Promise<void> {
   return scriptPromise;
 }
 
-/** Рисует настоящую кнопку Google в контейнере. Без client ID ничего не делает. */
 export async function renderGoogleButton(container: HTMLElement, onSession: (s: Session) => void): Promise<void> {
-  if (!googleEnabled()) throw new AuthFailure('auth.errGoogleOff');
+  if (!GOOGLE_CLIENT_ID) throw new AuthFailure('auth.errGoogleOff');
   await loadGoogleScript();
-  const google = (window as any).google;
+  const google = (window as unknown as { google: any }).google;
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: (response: { credential: string }) => {
