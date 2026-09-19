@@ -2,6 +2,7 @@ import { ACHIEVEMENT_LABELS, COUNTRY_LABELS, ENGLISH_TO_IELTS, FIELD_LABELS } fr
 import { PROGRAMS } from '../data/programs';
 import type { Band, Exclusion, Profile, Program, ReasonItem, Recommendation } from '../types';
 import { usd } from './format';
+import { t, type Key } from '../i18n';
 
 export function effectiveIelts(p: Profile): number {
   return p.ielts ?? ENGLISH_TO_IELTS[p.english];
@@ -37,24 +38,24 @@ function academicFit(p: Profile, prog: Program): Academic {
 
   const gpaM = (p.gpa - prog.minGpa) * 2;
   margins.push(gpaM);
-  if (gpaM >= 0) reasons.push({ kind: 'plus', text: `Средний балл ${p.gpa.toFixed(1)} не ниже ориентира программы (${prog.minGpa.toFixed(1)}).` });
+  if (gpaM >= 0) reasons.push({ kind: 'plus', text: t('r.gpaOk', { gpa: p.gpa.toFixed(1), min: prog.minGpa.toFixed(1) }) });
   else {
-    reasons.push({ kind: 'minus', text: `Средний балл ${p.gpa.toFixed(1)} ниже ориентира ${prog.minGpa.toFixed(1)}.` });
-    gaps.push(`Поднять средний балл до ${prog.minGpa.toFixed(1)}+`);
+    reasons.push({ kind: 'minus', text: t('r.gpaLow', { gpa: p.gpa.toFixed(1), min: prog.minGpa.toFixed(1) }) });
+    gaps.push(t('g.gpaRaise', { min: prog.minGpa.toFixed(1) }));
   }
 
   if (prog.minUnt) {
     if (p.untExpected == null) {
-      gaps.push(`Сдать пробное ЕНТ: для гранта ориентир от ${prog.minUnt + 15} баллов`);
+      gaps.push(t('g.untTrial', { min: prog.minUnt + 15 }));
       margins.push(-0.2);
     } else {
       const m = (p.untExpected - prog.minUnt) / 20;
       margins.push(m);
-      if (m >= 0.75) reasons.push({ kind: 'plus', text: `Ожидаемые ${p.untExpected} баллов ЕНТ дают хороший шанс на грант (порог ~${prog.minUnt}).` });
-      else if (m >= 0) reasons.push({ kind: 'info', text: `${p.untExpected} баллов ЕНТ проходят порог ~${prog.minUnt}, но за грант будет конкуренция.` });
+      if (m >= 0.75) reasons.push({ kind: 'plus', text: t('r.untGood', { unt: p.untExpected, min: prog.minUnt }) });
+      else if (m >= 0) reasons.push({ kind: 'info', text: t('r.untPass', { unt: p.untExpected, min: prog.minUnt }) });
       else {
-        reasons.push({ kind: 'minus', text: `Ожидаемые ${p.untExpected} баллов ЕНТ ниже ориентира ~${prog.minUnt}.` });
-        gaps.push(`Поднять ЕНТ до ${prog.minUnt + 15}+ баллов`);
+        reasons.push({ kind: 'minus', text: t('r.untLow', { unt: p.untExpected, min: prog.minUnt }) });
+        gaps.push(t('g.untRaise', { min: prog.minUnt + 15 }));
       }
     }
   }
@@ -63,27 +64,27 @@ function academicFit(p: Profile, prog: Program): Academic {
     const ie = effectiveIelts(p);
     const m = ie + growth - prog.minIelts;
     margins.push(m);
-    const src = p.ielts != null ? `IELTS ${p.ielts}` : `уровень ${p.english} (≈IELTS ${ie.toFixed(1)})`;
-    if (m >= 0) reasons.push({ kind: 'plus', text: `Английский (${src}) соответствует требованию ${prog.minIelts}.` });
+    const src = p.ielts != null ? `IELTS ${p.ielts}` : t('r.engLevel', { level: p.english, ielts: ie.toFixed(1) });
+    if (m >= 0) reasons.push({ kind: 'plus', text: t('r.engOk', { src, min: prog.minIelts }) });
     else {
-      reasons.push({ kind: 'minus', text: `Нужен IELTS ${prog.minIelts}, сейчас ${src}.` });
-      gaps.push(`Получить IELTS ${prog.minIelts}`);
+      reasons.push({ kind: 'minus', text: t('r.engLow', { min: prog.minIelts, src }) });
+      gaps.push(t('g.ielts', { min: prog.minIelts }));
     }
   }
 
   if (prog.satRecommended) {
     if (p.sat != null && p.sat >= 1300) {
       margins.push(0.5);
-      reasons.push({ kind: 'plus', text: `SAT ${p.sat} усиливает заявку.` });
+      reasons.push({ kind: 'plus', text: t('r.satOk', { sat: p.sat }) });
     } else if (p.sat != null) {
       margins.push(-0.2);
-      gaps.push('Поднять SAT до 1300+');
-    } else gaps.push('Сдать SAT — университет его рекомендует');
+      gaps.push(t('g.satRaise'));
+    } else gaps.push(t('g.satTake'));
   }
 
   const bonus = ACHIEVEMENT_BONUS[p.achievements];
-  if (bonus >= 0.25) reasons.push({ kind: 'plus', text: `Достижения (${ACHIEVEMENT_LABELS[p.achievements].toLowerCase()}) выделяют заявку.` });
-  if (prog.selectivity === 3 && bonus < 0.5) gaps.push('Олимпиады или проекты республиканского уровня заметно помогут');
+  if (bonus >= 0.25) reasons.push({ kind: 'plus', text: t('r.achOk', { level: ACHIEVEMENT_LABELS[p.achievements].toLowerCase() }) });
+  if (prog.selectivity === 3 && bonus < 0.5) gaps.push(t('g.achNational'));
 
   const avg = margins.reduce((a, b) => a + b, 0) / margins.length;
   const margin = avg + bonus - (prog.selectivity - 1) * 0.45;
@@ -113,16 +114,16 @@ export function recommend(p: Profile, programs: Program[] = PROGRAMS): Recommend
     const expected = p.needGrant ? withGrant : full;
 
     if (p.countries.length > 0 && !p.countries.includes(prog.country)) {
-      exclusions.push({ program: prog, reason: `Страна не выбрана: ${COUNTRY_LABELS[prog.country]}` });
+      exclusions.push({ program: prog, reason: t('x.country', { country: COUNTRY_LABELS[prog.country] }) });
       continue;
     }
     if (withGrant > p.budgetUSD * 1.5) {
-      exclusions.push({ program: prog, reason: `Даже со стипендией ≈${usd(withGrant)}/год при бюджете ${usd(p.budgetUSD)}` });
+      exclusions.push({ program: prog, reason: t('x.budget', { cost: usd(withGrant), budget: usd(p.budgetUSD) }) });
       continue;
     }
     const englishOnly = prog.language.every((l) => l === 'en');
     if (englishOnly && prog.minIelts && ie + growth < prog.minIelts - 1.5) {
-      exclusions.push({ program: prog, reason: `Обучение только на английском, нужен IELTS ${prog.minIelts}` });
+      exclusions.push({ program: prog, reason: t('x.english', { min: prog.minIelts }) });
       continue;
     }
 
@@ -132,24 +133,24 @@ export function recommend(p: Profile, programs: Program[] = PROGRAMS): Recommend
     // 1. Interest (35)
     const fieldScore = mainMatch ? 35 : 12;
     const matched = p.interests.filter((f) => prog.fields.includes(f)).map((f) => FIELD_LABELS[f]);
-    reasons.push({ kind: 'plus', text: `Совпадает с ${mainMatch ? 'главным интересом' : 'интересом'}: ${matched.join(', ')}.` });
-    breakdown.push({ label: 'Интересы', value: fieldScore, max: 35 });
+    reasons.push({ kind: 'plus', text: t('r.interest', { kind: mainMatch ? t('r.interestMain') : t('r.interestAny'), list: matched.join(', ') }) });
+    breakdown.push({ label: t('bd.interests'), value: fieldScore, max: 35 });
 
     // 2. Academic readiness (25)
     const ac = academicFit(p, prog);
     const acScore = Math.round(clamp(13 + ac.margin * 12, 0, 25));
     reasons.push(...ac.reasons);
-    breakdown.push({ label: 'Академическая готовность', value: acScore, max: 25 });
+    breakdown.push({ label: t('bd.academic'), value: acScore, max: 25 });
 
     // 3. Budget (20)
     const ratio = expected / Math.max(p.budgetUSD, 1);
     let budgetScore = ratio <= 0.7 ? 20 : ratio <= 1 ? 16 : ratio <= 1.25 ? 8 : 3;
     if (p.needGrant && prog.grant === 'none') budgetScore = Math.min(budgetScore, 6);
-    if (ratio <= 1) reasons.push({ kind: 'plus', text: `Вписывается в бюджет: ≈${usd(expected)}/год${p.needGrant && prog.grant !== 'none' ? ' с учётом гранта' : ''}.` });
-    else reasons.push({ kind: 'minus', text: `≈${usd(expected)}/год — выше бюджета ${usd(p.budgetUSD)}.` });
+    if (ratio <= 1) reasons.push({ kind: 'plus', text: t('r.budgetOk', { cost: usd(expected), grant: p.needGrant && prog.grant !== 'none' ? t('r.budgetGrantNote') : '' }) });
+    else reasons.push({ kind: 'minus', text: t('r.budgetOver', { cost: usd(expected), budget: usd(p.budgetUSD) }) });
     if (prog.grant !== 'none') reasons.push({ kind: 'info', text: prog.grantNote + '.' });
-    else if (p.needGrant) reasons.push({ kind: 'minus', text: 'Грантов практически нет — нужно самофинансирование.' });
-    breakdown.push({ label: 'Бюджет', value: budgetScore, max: 20 });
+    else if (p.needGrant) reasons.push({ kind: 'minus', text: t('r.noGrant') });
+    breakdown.push({ label: t('bd.budget'), value: budgetScore, max: 20 });
 
     // 4. Language of instruction (10)
     let langScore = 10;
@@ -157,7 +158,7 @@ export function recommend(p: Profile, programs: Program[] = PROGRAMS): Recommend
       const gap = prog.minIelts - (ie + growth);
       langScore = gap <= 0 ? 10 : gap <= 0.5 ? 7 : gap <= 1 ? 5 : 2;
     }
-    breakdown.push({ label: 'Язык обучения', value: langScore, max: 10 });
+    breakdown.push({ label: t('bd.language'), value: langScore, max: 10 });
 
     // 5. Personal priorities (10)
     let prio = p.countries.includes(prog.country) ? 4 : 2;
@@ -166,9 +167,9 @@ export function recommend(p: Profile, programs: Program[] = PROGRAMS): Recommend
     if (p.priorities.includes('english') && prog.language.includes('en')) { prio += 3; hits.push('обучение на английском'); }
     if (p.priorities.includes('close') && prog.country === 'KZ') { prio += 3; hits.push('близко к дому'); }
     if (p.priorities.includes('prestige') && prog.selectivity === 3) { prio += 3; hits.push('сильный бренд'); }
-    if (hits.length) reasons.push({ kind: 'plus', text: `Отвечает вашим приоритетам: ${hits.join(', ')}.` });
+    if (hits.length) reasons.push({ kind: 'plus', text: t('r.priorities', { list: hits.join(', ') }) });
     const prioScore = Math.min(prio, 10);
-    breakdown.push({ label: 'Ваши приоритеты', value: prioScore, max: 10 });
+    breakdown.push({ label: t('bd.priorities'), value: prioScore, max: 10 });
 
     const score = fieldScore + acScore + budgetScore + langScore + prioScore;
     eligible.push({
@@ -205,11 +206,16 @@ function pickTop(sorted: Recommendation[]): Recommendation[] {
   return top;
 }
 
-export const BAND_LABELS: Record<Band, { title: string; hint: string }> = {
-  safe: { title: 'Надёжный вариант', hint: 'Ваш профиль заметно выше ориентиров программы' },
-  target: { title: 'Реалистичный', hint: 'Профиль около ориентиров — шансы есть, если подготовиться' },
-  reach: { title: 'Амбициозный', hint: 'Нужно подтянуть показатели, но попробовать стоит' },
-};
+/** Подписи категорий читаются как объект, но берутся из словаря текущего языка. */
+export const BAND_LABELS: Record<Band, { title: string; hint: string }> = new Proxy(
+  {} as Record<Band, { title: string; hint: string }>,
+  {
+    get: (_, band: string) => ({
+      title: t(`band.${band}` as Key),
+      hint: t(`band.${band}Hint` as Key),
+    }),
+  },
+);
 
 /** Suggest what to relax when too few matches are found. */
 export function relaxHints(p: Profile): string[] {
@@ -218,10 +224,10 @@ export function relaxHints(p: Profile): string[] {
   const base = count(p);
   if (p.countries.length > 0) {
     const n = count({ ...p, countries: [] });
-    if (n > base) hints.push(`Снимите ограничение по странам — будет вариантов: ${n}`);
+    if (n > base) hints.push(t('h.dropCountries', { n }));
   }
   const richer = count({ ...p, budgetUSD: p.budgetUSD + 5000 });
-  if (richer > base) hints.push(`Увеличьте бюджет до ${usd(p.budgetUSD + 5000)} — будет вариантов: ${richer}`);
+  if (richer > base) hints.push(t('h.raiseBudget', { budget: usd(p.budgetUSD + 5000), n: richer }));
   if (p.interests.length < 3) hints.push('Добавьте ещё одно направление интересов');
   return hints;
 }

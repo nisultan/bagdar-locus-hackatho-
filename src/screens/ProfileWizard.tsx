@@ -5,23 +5,24 @@ import {
   ACHIEVEMENT_LABELS, COUNTRY_FLAG, COUNTRY_LABELS, ENGLISH_LABELS, FIELD_EMOJI, FIELD_LABELS, GRADE_LABELS, PRIORITY_LABELS,
 } from '../data/options';
 import { usd } from '../engine/format';
+import { t } from '../i18n';
 import { go } from '../router';
 import { useStore } from '../state/store';
 import type { Achievements, CountryCode, EnglishLevel, Field, Grade, Priority, Profile } from '../types';
 
-const TITLES = ['О вас', 'Интересы', 'Учёба и экзамены', 'Страны и бюджет', 'Что для вас важно'];
+const TITLE_KEYS = ['wz.t1', 'wz.t2', 'wz.t3', 'wz.t4', 'wz.t5'] as const;
 
 type Errors = Partial<Record<'interests' | 'unt' | 'ielts' | 'sat' | 'budget', string>>;
 
 export function validate(p: Profile, step: number): Errors {
   const e: Errors = {};
-  if (step === 2 && p.interests.length === 0) e.interests = 'Выберите хотя бы одно направление';
+  if (step === 2 && p.interests.length === 0) e.interests = t('wz.errField');
   if (step === 3) {
-    if (p.untExpected != null && (p.untExpected < 0 || p.untExpected > 140)) e.unt = 'ЕНТ оценивается от 0 до 140 баллов';
-    if (p.ielts != null && (p.ielts < 1 || p.ielts > 9)) e.ielts = 'IELTS — от 1 до 9';
-    if (p.sat != null && (p.sat < 400 || p.sat > 1600)) e.sat = 'SAT — от 400 до 1600';
+    if (p.untExpected != null && (p.untExpected < 0 || p.untExpected > 140)) e.unt = t('wz.errUnt');
+    if (p.ielts != null && (p.ielts < 1 || p.ielts > 9)) e.ielts = t('wz.errIelts');
+    if (p.sat != null && (p.sat < 400 || p.sat > 1600)) e.sat = t('wz.errSat');
   }
-  if (step === 4 && p.budgetUSD < 0) e.budget = 'Бюджет не может быть отрицательным';
+  if (step === 4 && p.budgetUSD < 0) e.budget = t('wz.errBudget');
   return e;
 }
 
@@ -31,7 +32,7 @@ export function ProfileWizard({ step }: { step: number }) {
   const { state, dispatch } = useStore();
   const [p, setP] = useState<Profile>(state.profile);
   const [errors, setErrors] = useState<Errors>({});
-  const s = Math.min(Math.max(step, 1), TITLES.length);
+  const s = Math.min(Math.max(step, 1), TITLE_KEYS.length);
   const set = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((x) => ({ ...x, [k]: v }));
   const editing = state.profileDone;
 
@@ -44,7 +45,7 @@ export function ProfileWizard({ step }: { step: number }) {
     const e = validate(p, s);
     setErrors(e);
     if (Object.keys(e).length) return;
-    if (s < TITLES.length) go(`profile/${s + 1}`);
+    if (s < TITLE_KEYS.length) go(`profile/${s + 1}`);
     else {
       // Профиль сохраняем сразу: оверлей показывает то, что уже произошло,
       // а не изображает работу, которой нет.
@@ -54,7 +55,7 @@ export function ProfileWizard({ step }: { step: number }) {
   };
 
   const saveNow = () => {
-    for (let i = 1; i <= TITLES.length; i++) {
+    for (let i = 1; i <= TITLE_KEYS.length; i++) {
       const e = validate(p, i);
       if (Object.keys(e).length) {
         setErrors(e);
@@ -71,9 +72,9 @@ export function ProfileWizard({ step }: { step: number }) {
       {building && (
         <RouteLoader
           steps={[
-            { label: 'Профиль сохранён', ms: 500 },
-            { label: 'Подбираем программы под ваши условия', ms: 650 },
-            { label: 'Собираем план по месяцам', ms: 550 },
+            { label: t('loader.saved'), ms: 500 },
+            { label: t('loader.picking'), ms: 650 },
+            { label: t('loader.planning'), ms: 550 },
           ]}
           onDone={() => go(editing ? 'recs' : 'diagnosis')}
         />
@@ -81,16 +82,16 @@ export function ProfileWizard({ step }: { step: number }) {
 
       <div className="wizard-progress">
         <div className="wizard-meta">
-          <span>Вопрос {s} из {TITLES.length}</span>
-          <span className="muted">{editing ? 'Изменения обновят рекомендации' : '≈ 3 минуты'}</span>
+          <span>{t('wz.questionOf', { n: s, total: TITLE_KEYS.length })}</span>
+          <span className="muted">{editing ? t('wz.editHint') : t('wz.timeHint')}</span>
         </div>
         <div className="wizard-bar">
-          {TITLES.map((t, i) => (
+          {TITLE_KEYS.map((key, i) => (
             <button
-              key={t}
+              key={key}
               type="button"
               className={`wizard-seg${i + 1 <= s ? ' on' : ''}`}
-              aria-label={`${i + 1}. ${t}`}
+              aria-label={`${i + 1}. ${t(key)}`}
               onClick={() => i + 1 < s && go(`profile/${i + 1}`)}
             />
           ))}
@@ -98,29 +99,29 @@ export function ProfileWizard({ step }: { step: number }) {
       </div>
 
       <section className="card wizard-card">
-        <h1 className="wizard-title">{TITLES[s - 1]}</h1>
+        <h1 className="wizard-title">{t(TITLE_KEYS[s - 1])}</h1>
 
         {s === 1 && (
           <>
             <label className="field">
-              <span className="label">Как к вам обращаться?</span>
-              <input value={p.name} maxLength={40} placeholder="Имя (необязательно)" onChange={(e) => set('name', e.target.value)} />
+              <span className="label">{t('wz.name')}</span>
+              <input value={p.name} maxLength={40} placeholder={t('wz.namePh')} onChange={(e) => set('name', e.target.value)} />
             </label>
             <div className="field">
-              <span className="label">В каком вы классе?</span>
+              <span className="label">{t('wz.grade')}</span>
               <div className="chips">
                 {(Object.keys(GRADE_LABELS) as Grade[]).map((g) => (
                   <Chip key={g} selected={p.grade === g} onClick={() => set('grade', g)}>{GRADE_LABELS[g]}</Chip>
                 ))}
               </div>
-              <p className="hint">От этого зависит, сколько времени остаётся на подготовку и когда подавать документы.</p>
+              <p className="hint">{t('wz.gradeHint')}</p>
             </div>
           </>
         )}
 
         {s === 2 && (
           <div className="field">
-            <span className="label">Что вам интересно? Выберите до 3 — первое станет главным</span>
+            <span className="label">{t('wz.interests')}</span>
             <div className="field-grid">
               {(Object.keys(FIELD_LABELS) as Field[]).map((f) => {
                 const idx = p.interests.indexOf(f);
@@ -134,7 +135,7 @@ export function ProfileWizard({ step }: { step: number }) {
                   >
                     <span className="field-emoji" aria-hidden>{FIELD_EMOJI[f]}</span>
                     <span>{FIELD_LABELS[f]}</span>
-                    {idx >= 0 && <span className="field-rank">{idx === 0 ? 'главный' : `#${idx + 1}`}</span>}
+                    {idx >= 0 && <span className="field-rank">{idx === 0 ? t('wz.mainTag') : `#${idx + 1}`}</span>}
                   </button>
                 );
               })}
@@ -146,28 +147,28 @@ export function ProfileWizard({ step }: { step: number }) {
         {s === 3 && (
           <>
             <label className="field">
-              <span className="label">Средний балл в школе: <b>{p.gpa.toFixed(1)}</b> из 5</span>
+              <span className="label">{t('wz.gpa')}<b>{p.gpa.toFixed(1)}</b>{t('wz.gpaOf')}</span>
               <input type="range" min={3} max={5} step={0.1} value={p.gpa} onChange={(e) => set('gpa', Number(e.target.value))} />
             </label>
             <div className="field-row">
               <label className="field">
-                <span className="label">Ожидаемый ЕНТ (0–140)</span>
-                <input inputMode="numeric" type="number" placeholder="Не знаю" value={p.untExpected ?? ''} onChange={(e) => set('untExpected', numOrNull(e.target.value))} />
+                <span className="label">{t('wz.unt')}</span>
+                <input inputMode="numeric" type="number" placeholder={t('wz.dontKnow')} value={p.untExpected ?? ''} onChange={(e) => set('untExpected', numOrNull(e.target.value))} />
                 {errors.unt && <p className="error">{errors.unt}</p>}
               </label>
               <label className="field">
-                <span className="label">IELTS, если есть</span>
-                <input inputMode="decimal" type="number" step={0.5} placeholder="Нет" value={p.ielts ?? ''} onChange={(e) => set('ielts', numOrNull(e.target.value))} />
+                <span className="label">{t('wz.ielts')}</span>
+                <input inputMode="decimal" type="number" step={0.5} placeholder={t('wz.none')} value={p.ielts ?? ''} onChange={(e) => set('ielts', numOrNull(e.target.value))} />
                 {errors.ielts && <p className="error">{errors.ielts}</p>}
               </label>
               <label className="field">
-                <span className="label">SAT, если есть</span>
-                <input inputMode="numeric" type="number" placeholder="Нет" value={p.sat ?? ''} onChange={(e) => set('sat', numOrNull(e.target.value))} />
+                <span className="label">{t('wz.sat')}</span>
+                <input inputMode="numeric" type="number" placeholder={t('wz.none')} value={p.sat ?? ''} onChange={(e) => set('sat', numOrNull(e.target.value))} />
                 {errors.sat && <p className="error">{errors.sat}</p>}
               </label>
             </div>
             <div className="field">
-              <span className="label">Уровень английского</span>
+              <span className="label">{t('wz.english')}</span>
               <div className="chips">
                 {(Object.keys(ENGLISH_LABELS) as EnglishLevel[]).map((l) => (
                   <Chip key={l} selected={p.english === l} onClick={() => set('english', l)}>{ENGLISH_LABELS[l]}</Chip>
@@ -175,7 +176,7 @@ export function ProfileWizard({ step }: { step: number }) {
               </div>
             </div>
             <label className="field">
-              <span className="label">Олимпиады, проекты, конкурсы</span>
+              <span className="label">{t('wz.ach')}</span>
               <select value={p.achievements} onChange={(e) => set('achievements', e.target.value as Achievements)}>
                 {(Object.keys(ACHIEVEMENT_LABELS) as Achievements[]).map((a) => (
                   <option key={a} value={a}>{ACHIEVEMENT_LABELS[a]}</option>
@@ -188,9 +189,9 @@ export function ProfileWizard({ step }: { step: number }) {
         {s === 4 && (
           <>
             <div className="field">
-              <span className="label">Где хотите учиться? {p.countries.length === 0 && <span className="muted">— рассматриваем все страны</span>}</span>
+              <span className="label">{t('wz.where')} {p.countries.length === 0 && <span className="muted">{t('wz.whereAll')}</span>}</span>
               <div className="chips">
-                <Chip selected={p.countries.length === 0} onClick={() => set('countries', [])}>Любая страна</Chip>
+                <Chip selected={p.countries.length === 0} onClick={() => set('countries', [])}>{t('wz.anyCountry')}</Chip>
                 {(Object.keys(COUNTRY_LABELS) as CountryCode[]).map((c) => (
                   <Chip key={c} selected={p.countries.includes(c)} onClick={() => set('countries', toggle(p.countries, c, 10))}>
                     {COUNTRY_FLAG[c]} {COUNTRY_LABELS[c]}
@@ -199,7 +200,7 @@ export function ProfileWizard({ step }: { step: number }) {
               </div>
             </div>
             <label className="field">
-              <span className="label">Бюджет семьи в год (обучение + жизнь): <b>{usd(p.budgetUSD)}</b></span>
+              <span className="label">{t('wz.budget')}<b>{usd(p.budgetUSD)}</b></span>
               <input type="range" min={0} max={50000} step={500} value={p.budgetUSD} onChange={(e) => set('budgetUSD', Number(e.target.value))} />
               <div className="range-scale"><span>$0</span><span>$25 000</span><span>$50 000</span></div>
               {errors.budget && <p className="error">{errors.budget}</p>}
@@ -207,14 +208,14 @@ export function ProfileWizard({ step }: { step: number }) {
             <label className="toggle">
               <input type="checkbox" checked={p.needGrant} onChange={(e) => set('needGrant', e.target.checked)} />
               <span className="toggle-ui" aria-hidden />
-              <span>Рассчитываю на грант или стипендию</span>
+              <span>{t('wz.needGrant')}</span>
             </label>
           </>
         )}
 
         {s === 5 && (
           <div className="field">
-            <span className="label">Выберите до 2 приоритетов — они влияют на порядок вариантов</span>
+            <span className="label">{t('wz.priorities')}</span>
             <div className="chips">
               {(Object.keys(PRIORITY_LABELS) as Priority[]).map((k) => (
                 <Chip key={k} selected={p.priorities.includes(k)} onClick={() => set('priorities', toggle(p.priorities, k, 2))}>
@@ -227,14 +228,14 @@ export function ProfileWizard({ step }: { step: number }) {
 
         <div className="wizard-actions">
           {s > 1 ? (
-            <Button variant="ghost" icon="back" onClick={() => go(s === 2 ? 'profile' : `profile/${s - 1}`)}>Назад</Button>
+            <Button variant="ghost" icon="back" onClick={() => go(s === 2 ? 'profile' : `profile/${s - 1}`)}>{t('ui.back')}</Button>
           ) : (
-            <Button variant="ghost" icon="back" onClick={() => go('')}>На главную</Button>
+            <Button variant="ghost" icon="back" onClick={() => go('')}>{t('ui.home')}</Button>
           )}
           <div className="wizard-actions-right">
-            {editing && s < TITLES.length && <Button variant="secondary" onClick={saveNow}>Сохранить</Button>}
+            {editing && s < TITLE_KEYS.length && <Button variant="secondary" onClick={saveNow}>{t('wz.save')}</Button>}
             <Button iconRight="arrow" onClick={next}>
-              {s < TITLES.length ? 'Далее' : editing ? 'Обновить маршрут' : 'Получить диагностику'}
+              {s < TITLE_KEYS.length ? t('wz.next') : editing ? t('wz.update') : t('wz.finish')}
             </Button>
           </div>
         </div>

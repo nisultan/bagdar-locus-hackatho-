@@ -1,6 +1,7 @@
 import { ACHIEVEMENT_LABELS } from '../data/options';
 import type { Achievements, Profile, Program } from '../types';
 import { usd } from './format';
+import { t } from '../i18n';
 import { effectiveIelts, recommend } from './recommend';
 
 /**
@@ -61,8 +62,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'ielts-05',
       group: 'ielts',
       kind: 'exam',
-      title: `IELTS ${ielts.toFixed(1)} → ${to.toFixed(1)}`,
-      effort: '2–3 месяца подготовки',
+      title: t('lv.ielts', { from: ielts.toFixed(1), to: to.toFixed(1) }),
+      effort: t('lv.ieltsEffort1'),
       cost: 2,
       apply: (x) => ({ ...x, ielts: to }),
     });
@@ -73,8 +74,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'ielts-10',
       group: 'ielts',
       kind: 'exam',
-      title: `IELTS ${ielts.toFixed(1)} → ${to.toFixed(1)}`,
-      effort: '5–6 месяцев подготовки',
+      title: t('lv.ielts', { from: ielts.toFixed(1), to: to.toFixed(1) }),
+      effort: t('lv.ieltsEffort2'),
       cost: 3,
       apply: (x) => ({ ...x, ielts: to }),
     });
@@ -86,8 +87,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'unt-measure',
       group: 'unt',
       kind: 'exam',
-      title: 'Сдать пробное ЕНТ (ориентир 100)',
-      effort: 'один пробный тест',
+      title: t('lv.untTrial'),
+      effort: t('lv.untTrialEffort'),
       cost: 1,
       apply: (x) => ({ ...x, untExpected: 100 }),
     });
@@ -98,8 +99,8 @@ export function leversFor(p: Profile): Lever[] {
         id: 'unt-10',
         group: 'unt',
         kind: 'exam',
-        title: `ЕНТ ${p.untExpected} → ${to}`,
-        effort: '2–3 месяца по профильным предметам',
+        title: t('lv.unt', { from: p.untExpected, to }),
+        effort: t('lv.untEffort1'),
         cost: 2,
         apply: (x) => ({ ...x, untExpected: to }),
       });
@@ -110,8 +111,8 @@ export function leversFor(p: Profile): Lever[] {
         id: 'unt-20',
         group: 'unt',
         kind: 'exam',
-        title: `ЕНТ ${p.untExpected} → ${to}`,
-        effort: 'полгода системной подготовки',
+        title: t('lv.unt', { from: p.untExpected, to }),
+        effort: t('lv.untEffort2'),
         cost: 3,
         apply: (x) => ({ ...x, untExpected: to }),
       });
@@ -125,8 +126,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'gpa',
       group: 'gpa',
       kind: 'academic',
-      title: `Средний балл ${p.gpa.toFixed(1)} → ${to.toFixed(1)}`,
-      effort: 'ровные оценки до конца года',
+      title: t('lv.gpa', { from: p.gpa.toFixed(1), to: to.toFixed(1) }),
+      effort: t('lv.gpaEffort'),
       cost: 2,
       apply: (x) => ({ ...x, gpa: to }),
     });
@@ -141,8 +142,8 @@ export function leversFor(p: Profile): Lever[] {
       id,
       group: 'budget',
       kind: 'budget',
-      title: `Бюджет ${usd(p.budgetUSD)} → ${usd(p.budgetUSD + add)} в год`,
-      effort: add <= 1500 ? 'разговор с семьёй' : 'семейный бюджет или образовательный кредит',
+      title: t('lv.budget', { from: usd(p.budgetUSD), to: usd(p.budgetUSD + add) }),
+      effort: add <= 1500 ? t('lv.budgetEffort1') : t('lv.budgetEffort2'),
       cost,
       apply: (x) => ({ ...x, budgetUSD: x.budgetUSD + add }),
     });
@@ -156,8 +157,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'achievement',
       group: 'achievement',
       kind: 'activity',
-      title: `Достижения: ${ACHIEVEMENT_LABELS[p.achievements].toLowerCase()} → ${ACHIEVEMENT_LABELS[to].toLowerCase()}`,
-      effort: 'участие в олимпиаде или конкурсе этого сезона',
+      title: t('lv.ach', { from: ACHIEVEMENT_LABELS[p.achievements].toLowerCase(), to: ACHIEVEMENT_LABELS[to].toLowerCase() }),
+      effort: t('lv.achEffort'),
       cost: 2,
       apply: (x) => ({ ...x, achievements: to }),
     });
@@ -169,8 +170,8 @@ export function leversFor(p: Profile): Lever[] {
       id: 'countries',
       group: 'countries',
       kind: 'scope',
-      title: 'Рассмотреть все страны, а не только выбранные',
-      effort: 'ничего не нужно сдавать — только согласиться посмотреть шире',
+      title: t('lv.countries'),
+      effort: t('lv.countriesEffort'),
       cost: 1,
       apply: (x) => ({ ...x, countries: [] }),
     });

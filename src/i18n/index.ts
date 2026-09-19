@@ -41,6 +41,7 @@ export function setLang(next: Lang) {
     /* приватный режим — выбор не переживёт перезагрузку, но работать будет */
   }
   document.documentElement.lang = next;
+  document.title = t('app.title');
   listeners.forEach((fn) => fn(next));
 }
 
@@ -51,7 +52,10 @@ export function subscribeLang(fn: (l: Lang) => void) {
   };
 }
 
-if (typeof document !== 'undefined') document.documentElement.lang = lang;
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = lang;
+  document.title = t('app.title');
+}
 
 /**
  * Перевод по ключу. `vars` подставляются как {name}.

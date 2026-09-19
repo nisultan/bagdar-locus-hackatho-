@@ -1,10 +1,13 @@
-const MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+import { getLang } from '../i18n';
+
+const MONTHS_RU = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+const MONTHS_KK = ['қаңтар', 'ақпан', 'наурыз', 'сәуір', 'мамыр', 'маусым', 'шілде', 'тамыз', 'қыркүйек', 'қазан', 'қараша', 'желтоқсан'];
 
 export const usd = (n: number) => (n === 0 ? '$0' : '$' + Math.round(n).toLocaleString('en-US'));
 
 export const monthYear = (iso: string) => {
   const [y, m] = iso.split('-').map(Number);
-  return `${MONTHS[m - 1]} ${y}`;
+  return `${(getLang() === 'kk' ? MONTHS_KK : MONTHS_RU)[m - 1]} ${y}`;
 };
 
 export const isoMonth = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}-01`;

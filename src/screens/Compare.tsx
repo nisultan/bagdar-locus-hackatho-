@@ -3,6 +3,7 @@ import { BandBadge, Button, Chip, EstimateNote, Icon, PageHead, SourceLink } fro
 import { COUNTRY_FLAG, COUNTRY_LABELS } from '../data/options';
 import { usd } from '../engine/format';
 import { effectiveIelts } from '../engine/recommend';
+import { t } from '../i18n';
 import { go } from '../router';
 import { useStore } from '../state/store';
 import type { Recommendation } from '../types';
@@ -25,24 +26,24 @@ export function Compare() {
 
   const ie = effectiveIelts(p);
   const rows: Row[] = [
-    { label: 'Совпадение с профилем', value: (r) => <b>{r.score}/100</b>, best: (r) => r.score },
-    { label: 'Оценка готовности', value: (r) => <BandBadge band={r.band} />, best: (r) => ({ safe: 2, target: 1, reach: 0 })[r.band] },
-    { label: 'Расходы в год без гранта', value: (r) => `≈${usd(r.yearlyCostUSD)}`, best: (r) => r.yearlyCostUSD, lowerIsBetter: true },
-    { label: 'С грантом / стипендией', value: (r) => (r.program.grant === 'none' ? 'грантов почти нет' : `≈${usd(r.costWithGrantUSD)}`), best: (r) => r.costWithGrantUSD, lowerIsBetter: true },
-    { label: 'Финансирование', value: (r) => r.program.grantNote },
-    { label: 'Язык обучения', value: (r) => r.program.language.map((l) => l.toUpperCase()).join(' / ') },
+    { label: t('cp.match'), value: (r) => <b>{r.score}/100</b>, best: (r) => r.score },
+    { label: t('cp.readiness'), value: (r) => <BandBadge band={r.band} />, best: (r) => ({ safe: 2, target: 1, reach: 0 })[r.band] },
+    { label: t('cp.costFull'), value: (r) => `≈${usd(r.yearlyCostUSD)}`, best: (r) => r.yearlyCostUSD, lowerIsBetter: true },
+    { label: t('cp.costGrant'), value: (r) => (r.program.grant === 'none' ? t('cp.noGrants') : `≈${usd(r.costWithGrantUSD)}`), best: (r) => r.costWithGrantUSD, lowerIsBetter: true },
+    { label: t('cp.funding'), value: (r) => r.program.grantNote },
+    { label: t('cp.language'), value: (r) => r.program.language.map((l) => l.toUpperCase()).join(' / ') },
     {
-      label: 'Английский',
-      value: (r) => (r.program.minIelts ? <>IELTS {r.program.minIelts} {ie >= r.program.minIelts ? <span className="ok">✓ у вас есть</span> : <span className="bad">нужно +{(r.program.minIelts - ie).toFixed(1)}</span>}</> : 'не обязателен'),
+      label: t('cp.english'),
+      value: (r) => (r.program.minIelts ? <>IELTS {r.program.minIelts} {ie >= r.program.minIelts ? <span className="ok">{t('cp.haveIt')}</span> : <span className="bad">{t('cp.needPlus', { n: (r.program.minIelts - ie).toFixed(1) })}</span>}</> : t('cp.notRequired')),
     },
     {
-      label: 'Экзамены',
-      value: (r) => [r.program.minUnt ? `ЕНТ от ~${r.program.minUnt}` : null, r.program.satRecommended ? 'SAT желателен' : null, `балл ${r.program.minGpa}+`].filter(Boolean).join(' · '),
+      label: t('cp.exams'),
+      value: (r) => [r.program.minUnt ? t('cp.untFrom', { n: r.program.minUnt }) : null, r.program.satRecommended ? t('cp.satWanted') : null, t('cp.gpaFrom', { n: r.program.minGpa })].filter(Boolean).join(' · '),
     },
-    { label: 'Как поступают', value: (r) => r.program.entrance },
-    { label: 'Подача', value: (r) => <>{r.program.deadline.label} <EstimateNote /></> },
-    { label: 'Город', value: (r) => `${COUNTRY_FLAG[r.program.country]} ${r.program.city}, ${COUNTRY_LABELS[r.program.country]}` },
-    { label: 'Что подтянуть', value: (r) => (r.gaps.length ? r.gaps.join('; ') : 'пробелов нет') , best: (r) => r.gaps.length, lowerIsBetter: true },
+    { label: t('cp.entrance'), value: (r) => r.program.entrance },
+    { label: t('cp.deadline'), value: (r) => <>{r.program.deadline.label} <EstimateNote /></> },
+    { label: t('cp.city'), value: (r) => `${COUNTRY_FLAG[r.program.country]} ${r.program.city}, ${COUNTRY_LABELS[r.program.country]}` },
+    { label: t('cp.gaps'), value: (r) => (r.gaps.length ? r.gaps.join('; ') : t('cp.noGaps')) , best: (r) => r.gaps.length, lowerIsBetter: true },
   ];
 
   const bestIdx = (row: Row) => {
@@ -56,8 +57,8 @@ export function Compare() {
 
   return (
     <div className="stack">
-      <PageHead eyebrow="Этап 5 · Сравнение" title="Сравните варианты по важному для вас">
-        {autoPicked ? 'Вы ещё не выбрали программы — сравниваем две лучшие. Выберите свои ниже.' : 'Лучшее значение в строке подсвечено.'}
+      <PageHead eyebrow={t('cp.eyebrow')} title={t('cp.title')}>
+        {autoPicked ? t('cp.autoNote') : t('cp.bestNote')}
       </PageHead>
 
       <div className="chips">
@@ -71,16 +72,16 @@ export function Compare() {
       {selected.length < 2 ? (
         <section className="card empty">
           <Icon name="compare" size={32} />
-          <h2>Нужно минимум два варианта</h2>
-          <p className="muted">Расширьте условия в анкете, чтобы появилось больше рекомендаций.</p>
-          <Button onClick={() => go('recs')}>К рекомендациям</Button>
+          <h2>{t('cp.needTwo')}</h2>
+          <p className="muted">{t('cp.needTwoText')}</p>
+          <Button onClick={() => go('recs')}>{t('cp.toRecs')}</Button>
         </section>
       ) : (
         <div className="compare-wrap">
           <table className="compare" style={{ ['--cols' as string]: selected.length }}>
             <thead>
               <tr>
-                <th scope="col"><span className="sr-only">Параметр</span></th>
+                <th scope="col"><span className="sr-only">{t('cp.param')}</span></th>
                 {selected.map((r) => (
                   <th key={r.program.id} scope="col">
                     <b>{r.program.university}</b>
@@ -102,19 +103,19 @@ export function Compare() {
                 );
               })}
               <tr>
-                <th scope="row">Источник</th>
+                <th scope="row">{t('cp.source')}</th>
                 {selected.map((r) => (
                   <td key={r.program.id}><SourceLink href={r.program.sourceUrl} /></td>
                 ))}
               </tr>
               <tr>
-                <th scope="row">Действие</th>
+                <th scope="row">{t('cp.action')}</th>
                 {selected.map((r) => {
                   const inPlan = state.shortlist.includes(r.program.id);
                   return (
                     <td key={r.program.id}>
                       <Button small variant={inPlan ? 'primary' : 'secondary'} icon={inPlan ? 'check' : 'plus'} onClick={() => dispatch({ type: 'toggleShortlist', id: r.program.id })}>
-                        {inPlan ? 'В плане' : 'В план'}
+                        {inPlan ? t('rc.inPlan') : t('rc.addPlan')}
                       </Button>
                     </td>
                   );
@@ -129,15 +130,15 @@ export function Compare() {
         <section className="card verdict">
           <Icon name="spark" />
           <p>
-            <b>Вывод:</b> по совокупности ваших ответов сильнее совпадает <b>{winner.program.university}</b> ({winner.score}/100).
-            {' '}Но если для вас решающая — цена, смотрите строку «С грантом / стипендией».
+            <b>{t('cp.verdict')}</b>{t('cp.verdictText')}<b>{winner.program.university}</b> ({winner.score}/100).
+            {t('cp.verdictTail')}
           </p>
         </section>
       )}
 
       <div className="page-actions">
-        <Button variant="ghost" icon="back" onClick={() => go('recs')}>Рекомендации</Button>
-        <Button iconRight="arrow" onClick={() => go('plan')}>Построить план ({state.shortlist.length})</Button>
+        <Button variant="ghost" icon="back" onClick={() => go('recs')}>{t('cp.recs')}</Button>
+        <Button iconRight="arrow" onClick={() => go('plan')}>{t('cp.buildPlan', { n: state.shortlist.length })}</Button>
       </div>
     </div>
   );

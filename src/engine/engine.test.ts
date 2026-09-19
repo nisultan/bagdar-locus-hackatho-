@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SAMPLE_PROFILE } from '../data/options';
+import { COUNTRY_LABELS, SAMPLE_PROFILE } from '../data/options';
 import { PROGRAMS } from '../data/programs';
 import { diagnose } from './diagnose';
 import { leversFor, rankLevers } from './leverage';
@@ -37,7 +37,7 @@ describe('recommend', () => {
   it('respects the country filter and reports exclusions', () => {
     const r = recommend({ ...SAMPLE_PROFILE, countries: ['KZ'] });
     expect(r.eligible.every((x) => x.program.country === 'KZ')).toBe(true);
-    expect(r.exclusions.some((e) => e.reason.startsWith('Страна'))).toBe(true);
+    expect(r.exclusions.some((e) => e.reason.includes(COUNTRY_LABELS.US))).toBe(true);
   });
 
   it('excludes programs far above the budget', () => {

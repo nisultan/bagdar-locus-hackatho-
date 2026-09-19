@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Reveal } from '../components/motion';
 import { Button, Icon } from '../components/ui';
-import { plural } from '../engine/format';
+import { plural, t } from '../i18n';
 import { rankLevers, type LeverEffect, type LeverKind } from '../engine/leverage';
 import { useStore } from '../state/store';
 
@@ -13,7 +13,7 @@ const KIND_ICON: Record<LeverKind, string> = {
   scope: 'compare',
 };
 
-const COST_LABEL = { 1: 'быстро', 2: 'средне', 3: 'долго' } as const;
+const COST_KEY = { 1: 'lv.cost1', 2: 'lv.cost2', 3: 'lv.cost3' } as const;
 
 /**
  * «Рычаги» — обратная сторона рекомендаций. Список отвечает, куда поступать сейчас;
@@ -33,10 +33,9 @@ export function Levers() {
       <div className="levers-head">
         <span className="levers-icon"><Icon name="spark" /></span>
         <div>
-          <h2>Что изменит список сильнее всего</h2>
+          <h2>{t('lv.title')}</h2>
           <p className="muted small">
-            Мы подставили каждое изменение в тот же алгоритм подбора и посчитали разницу. Это не прогноз шансов —
-            это пересчёт: нажмите «примерить», чтобы увидеть список таким, каким он станет.
+            {t('lv.lead')}
           </p>
         </div>
       </div>
@@ -83,34 +82,34 @@ function LeverRow({
         <div className="lever-gains">
           {unlocked.length > 0 && (
             <span className="lever-gain lever-gain-strong">
-              <Icon name="plus" size={13} />{unlocked.length}&nbsp;{plural(unlocked.length, 'программа', 'программы', 'программ')}
+              <Icon name="plus" size={13} />{unlocked.length}&nbsp;{plural(unlocked.length, t('lv.progOne'), t('lv.progFew'), t('lv.progMany'))}
             </span>
           )}
           {bandUpgrades > 0 && (
             <span className="lever-gain">
-              <Icon name="check" size={13} />{bandUpgrades}&nbsp;{plural(bandUpgrades, 'вариант', 'варианта', 'вариантов')} станет надёжнее
+              <Icon name="check" size={13} />{bandUpgrades}&nbsp;{plural(bandUpgrades, t('lv.optOne'), t('lv.optFew'), t('lv.optMany'))} {t('lv.safer')}
             </span>
           )}
-          {scoreDelta > 0 && <span className="lever-gain">совпадение +{scoreDelta}</span>}
+          {scoreDelta > 0 && <span className="lever-gain">{t('lv.match', { n: scoreDelta })}</span>}
         </div>
 
         {unlocked.length > 0 && (
           <p className="small muted lever-unlocked">
-            Откроется: {unlocked.slice(0, 4).map((p) => p.university).join(', ')}
-            {unlocked.length > 4 && ` и ещё ${unlocked.length - 4}`}
+            {t('lv.opens', { list: unlocked.slice(0, 4).map((p) => p.university).join(', ') })}
+            {unlocked.length > 4 && t('lv.opensMore', { n: unlocked.length - 4 })}
           </p>
         )}
 
         <p className="small muted lever-effort">
-          <Icon name="deadline" size={13} /> {lever.effort} · усилие: {COST_LABEL[lever.cost]}
+          <Icon name="deadline" size={13} /> {t('lv.effortLabel', { effort: lever.effort, cost: t(COST_KEY[lever.cost]) })}
         </p>
       </div>
 
       <div className="lever-actions">
         <Button small variant={active ? 'accent' : 'secondary'} onClick={onPreview}>
-          {active ? 'Вернуть как было' : 'Примерить'}
+          {active ? t('lv.undo') : t('lv.try')}
         </Button>
-        <Button small variant="ghost" onClick={onApply}>Взять целью</Button>
+        <Button small variant="ghost" onClick={onApply}>{t('lv.adopt')}</Button>
       </div>
     </li>
   );

@@ -1,6 +1,6 @@
-import { t as tr } from '../i18n';
+import { plural, t as tr } from '../i18n';
 import { Button, CATEGORY_META, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
-import { monthYear, plural } from '../engine/format';
+import { monthYear } from '../engine/format';
 import { go } from '../router';
 import { useStore } from '../state/store';
 
@@ -15,32 +15,32 @@ export function NextStep() {
 
   return (
     <div className="stack">
-      <PageHead eyebrow="Этап 7 · Следующее действие" title={state.profile.name ? `${state.profile.name}, ваш шаг на сейчас` : 'Ваш шаг на сейчас'} />
+      <PageHead eyebrow={tr('ns.eyebrow')} title={state.profile.name ? tr('ns.titleName', { name: state.profile.name }) : tr('ns.title')} />
 
       <div className="next-layout">
         {next ? (
           <section className="card next-hero">
             <div className="next-top">
               <span className={`cat cat-${next.category}`}><Icon name={CATEGORY_META[next.category].icon} size={14} /> {tr(CATEGORY_META[next.category].label)}</span>
-              <span className="small">до: <b>{monthYear(next.due)}</b></span>
-              {next.estimated && <EstimateNote>дата — ориентир</EstimateNote>}
+              <span className="small">{tr('ns.by')}<b>{monthYear(next.due)}</b></span>
+              {next.estimated && <EstimateNote>{tr('pl.dateEstimate')}</EstimateNote>}
             </div>
             <h2 className="next-title">{next.title}</h2>
             <p className="next-why">{next.why}</p>
-            {next.sourceUrl && <SourceLink href={next.sourceUrl} label="Где это сделать" />}
+            {next.sourceUrl && <SourceLink href={next.sourceUrl} label={tr('ns.where')} />}
             <div className="next-actions">
               <Button variant="accent" icon="check" onClick={() => dispatch({ type: 'toggleDone', id: next.id })}>
-                Готово, дальше
+                {tr('ns.doneNext')}
               </Button>
-              <Button variant="ghost" onClick={() => go('plan')}>Весь план</Button>
+              <Button variant="ghost" onClick={() => go('plan')}>{tr('ns.wholePlan')}</Button>
             </div>
           </section>
         ) : (
           <section className="card next-hero next-finished">
             <Icon name="spark" size={36} />
-            <h2 className="next-title">Все шаги плана выполнены!</h2>
-            <p className="next-why">Проверьте ответы от университетов и актуальные даты на официальных сайтах. Если что-то поменялось — обновите анкету, и план перестроится.</p>
-            <Button icon="edit" onClick={() => go('profile')}>Обновить анкету</Button>
+            <h2 className="next-title">{tr('ns.allDone')}</h2>
+            <p className="next-why">{tr('ns.allDoneText')}</p>
+            <Button icon="edit" onClick={() => go('profile')}>{tr('ns.refresh')}</Button>
           </section>
         )}
 
@@ -52,14 +52,14 @@ export function NextStep() {
             </svg>
             <span>{pct}%</span>
           </div>
-          <p><b>{progress.done}</b> из {progress.total} шагов</p>
-          <p className="small muted">{left > 0 ? `Осталось ${left} ${plural(left, 'шаг', 'шага', 'шагов')} до поступления в ${roadmap.intakeYear}` : 'Маршрут пройден'}</p>
+          <p>{tr('ns.doneOf', { done: progress.done, total: progress.total })}</p>
+          <p className="small muted">{left > 0 ? tr('ns.leftUntil', { n: left, word: plural(left, tr('ns.stepOne'), tr('ns.stepFew'), tr('ns.stepMany')), year: roadmap.intakeYear }) : tr('ns.routeDone')}</p>
         </aside>
       </div>
 
       {upcoming.length > 0 && (
         <section>
-          <h2 className="section-title">Дальше по плану</h2>
+          <h2 className="section-title">{tr('ns.upNext')}</h2>
           <ul className="upcoming">
             {upcoming.map((t) => (
               <li key={t.id} className="card upcoming-item">
@@ -75,12 +75,12 @@ export function NextStep() {
       )}
 
       <div className="page-actions">
-        <Button variant="ghost" icon="edit" onClick={() => go('profile')}>Изменить анкету</Button>
+        <Button variant="ghost" icon="edit" onClick={() => go('profile')}>{tr('ns.editForm')}</Button>
         <Button
           variant="ghost"
           icon="refresh"
           onClick={() => {
-            if (window.confirm('Сбросить анкету и весь прогресс?')) {
+            if (window.confirm(tr('ns.resetConfirm'))) {
               dispatch({ type: 'reset' });
               go('');
             }
