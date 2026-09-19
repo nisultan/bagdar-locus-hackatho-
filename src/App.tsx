@@ -11,24 +11,33 @@ import { ProfileWizard } from './screens/ProfileWizard';
 import { Recommendations } from './screens/Recommendations';
 import { RoadmapScreen } from './screens/Roadmap';
 import { Sidebar } from './components/Sidebar';
+import { LangToggle } from './components/LangToggle';
+import { t } from './i18n';
+import { useLang } from './i18n/useLang';
 import { STAGES } from './stages';
 
-const SIDEBAR_KEY = 'bagdar.sidebar';
+import { Legal } from './screens/Legal';
 import { useStore } from './state/store';
+
+const SIDEBAR_KEY = 'bagdar.sidebar';
 
 
 export default function App() {
   const { state, dispatch, derived } = useStore();
   const route = useRoute();
+  useLang(); // перерисовать всё дерево при смене языка
+  // Правовые страницы живут вне маршрута: они не этап и не требуют анкеты.
+  const legal = route.stage === 'privacy' || route.stage === 'terms' ? route.stage : null;
   const known = STAGES.some((s) => s.id === route.stage);
   const needsProfile = !state.profileDone && !['start', 'profile'].includes(route.stage);
   const stage = !known ? 'start' : needsProfile ? 'profile' : route.stage;
 
   useEffect(() => {
+    if (legal) return;
     if (!known) go('');
     else if (needsProfile) go('profile');
     else dispatch({ type: 'visit', stage });
-  }, [known, needsProfile, stage, dispatch]);
+  }, [legal, known, needsProfile, stage, dispatch]);
 
   const current = STAGES.findIndex((s) => s.id === stage);
 
@@ -80,14 +89,16 @@ export default function App() {
           {state.profileDone && derived.next && stage !== 'next' && (
             <a className="topbar-next" href="#/next">
               <Icon name="flag" size={16} />
-              <span className="topbar-next-text">Шаг: {derived.next.title}</span>
+              <span className="topbar-next-text">{t('app.stepChip', { title: derived.next.title })}</span>
             </a>
           )}
+          <LangToggle />
           <ThemeToggle />
         </div>
       </header>
 
-      <nav className="stepper" aria-label="Этапы маршрута">
+      {!legal && (
+      <nav className="stepper" aria-label={t('nav.route')}>
         <ol>
           {STAGES.map((s, i) => {
             const locked = !state.profileDone && i > 1;
@@ -102,32 +113,36 @@ export default function App() {
                   onClick={() => go(s.id === 'start' ? '' : s.id)}
                 >
                   <span className="step-dot">{done ? <Icon name="check" size={14} /> : i + 1}</span>
-                  <span className="step-label">{s.label}</span>
+                  <span className="step-label">{t(s.label)}</span>
                 </button>
               </li>
             );
           })}
         </ol>
         <p className="stepper-mobile">
-          Этап {current + 1} из {STAGES.length}: <b>{STAGES[current].label}</b>
-          {current < STAGES.length - 1 && <span> → далее {STAGES[current + 1].label.toLowerCase()}</span>}
+          {t('app.stageOf', { n: current + 1, total: STAGES.length })} <b>{t(STAGES[current].label)}</b>
+          {current < STAGES.length - 1 && <span> {t('app.thenNext', { next: t(STAGES[current + 1].label).toLowerCase() })}</span>}
         </p>
       </nav>
+      )}
 
-      <main className="main" key={stage}>
-        {stage === 'start' && <Landing />}
-        {stage === 'profile' && <ProfileWizard step={Number(route.param) || 1} />}
-        {stage === 'diagnosis' && <Diagnosis />}
-        {stage === 'recs' && <Recommendations />}
-        {stage === 'compare' && <Compare />}
-        {stage === 'plan' && <RoadmapScreen />}
-        {stage === 'next' && <NextStep />}
+      <main className="main" key={legal ?? stage}>
+        {legal && <Legal kind={legal} />}
+        {!legal && stage === 'start' && <Landing />}
+        {!legal && stage === 'profile' && <ProfileWizard step={Number(route.param) || 1} />}
+        {!legal && stage === 'diagnosis' && <Diagnosis />}
+        {!legal && stage === 'recs' && <Recommendations />}
+        {!legal && stage === 'compare' && <Compare />}
+        {!legal && stage === 'plan' && <RoadmapScreen />}
+        {!legal && stage === 'next' && <NextStep />}
       </main>
 
       <footer className="footer">
-        <b>Bagdar</b> — от казахского «бағдар», направление. Рекомендации строятся по прозрачным правилам, стоимость и дедлайны
-        сверены с сайтами вузов ({new Date().getFullYear()}). Сервис не гарантирует поступление — всегда проверяйте условия
-        на официальных сайтах.
+        <p><b>{t('app.footerName')}</b> {t('app.footer', { year: new Date().getFullYear() })}</p>
+        <p className="footer-links">
+          <a href="#/privacy">{t('app.privacy')}</a>
+          <a href="#/terms">{t('app.terms')}</a>
+        </p>
       </footer>
       </div>
     </div>

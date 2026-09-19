@@ -1,10 +1,12 @@
-/** Этапы маршрута. Вынесены из App, чтобы навигация могла их импортировать без цикла. */
-export const STAGES = [
-  { id: 'start', label: 'Старт' },
-  { id: 'profile', label: 'Профиль' },
-  { id: 'diagnosis', label: 'Диагностика' },
-  { id: 'recs', label: 'Рекомендации' },
-  { id: 'compare', label: 'Сравнение' },
-  { id: 'plan', label: 'План' },
-  { id: 'next', label: 'Следующий шаг' },
+import type { Key } from './i18n';
+
+/** Этапы маршрута. Подпись хранится ключом — она зависит от языка. */
+export const STAGES: { id: string; label: Key }[] = [
+  { id: 'start', label: 'stage.start' },
+  { id: 'profile', label: 'stage.profile' },
+  { id: 'diagnosis', label: 'stage.diagnosis' },
+  { id: 'recs', label: 'stage.recs' },
+  { id: 'compare', label: 'stage.compare' },
+  { id: 'plan', label: 'stage.plan' },
+  { id: 'next', label: 'stage.next' },
 ];

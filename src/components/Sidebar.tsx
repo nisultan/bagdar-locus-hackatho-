@@ -2,6 +2,8 @@ import { STAGES } from '../stages';
 import { go } from '../router';
 import { useStore } from '../state/store';
 import { ThemeToggle } from './ThemeToggle';
+import { t } from '../i18n';
+import { LangToggle } from './LangToggle';
 import { Icon } from './ui';
 
 /**
@@ -25,7 +27,7 @@ export function Sidebar({
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <aside className="sidebar" aria-label="Навигация по маршруту">
+    <aside className="sidebar" aria-label={t('nav.sidebar')}>
       <div className="sidebar-head">
       <a className="logo sidebar-logo" href="#/">
         <span className="logo-mark" aria-hidden>
@@ -48,14 +50,14 @@ export function Sidebar({
           className="sidebar-toggle"
           onClick={onToggle}
           aria-expanded={!collapsed}
-          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
-          aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+          title={collapsed ? t('nav.expand') : t('nav.collapse')}
+          aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
         >
           <Icon name={collapsed ? 'arrow' : 'back'} size={18} />
         </button>
       </div>
 
-      <nav className="sidebar-nav" aria-label="Этапы маршрута">
+      <nav className="sidebar-nav" aria-label={t('nav.route')}>
         <ol
           className="sidebar-route"
           /* Заливка линии маршрута до текущего этапа */
@@ -76,8 +78,8 @@ export function Sidebar({
                   <span className="sidebar-dot">
                     {isDone ? <Icon name="check" size={13} /> : locked ? <Icon name="lock" size={12} /> : i + 1}
                   </span>
-                  <span className="sidebar-label">{s.label}</span>
-                  {collapsed && <span className="sidebar-tip">{s.label}</span>}
+                  <span className="sidebar-label">{t(s.label)}</span>
+                  {collapsed && <span className="sidebar-tip">{t(s.label)}</span>}
                 </button>
               </li>
             );
@@ -88,7 +90,7 @@ export function Sidebar({
       <div className="sidebar-foot">
         {state.profileDone && derived.next && (
           <a className="sidebar-next" href="#/next">
-            <span className="small">Ближайший шаг</span>
+            <span className="small">{t('nav.nextStep')}</span>
             <b>{derived.next.title}</b>
           </a>
         )}
@@ -96,8 +98,8 @@ export function Sidebar({
         {state.profileDone && total > 0 && (
           <div className="sidebar-progress">
             <div className="sidebar-progress-head small">
-              <span>План</span>
-              <span className="num">{done} из {total}</span>
+              <span>{t('nav.plan')}</span>
+              <span className="num">{t('nav.planOf', { done, total })}</span>
             </div>
             <div className="meter"><div className="meter-fill" style={{ width: `${pct}%`, background: 'var(--primary)' }} /></div>
           </div>
@@ -105,7 +107,8 @@ export function Sidebar({
 
         <div className="sidebar-tools">
           <ThemeToggle />
-          <span className="small muted">бағдар — направление</span>
+          <LangToggle />
+          <span className="small muted">{t('nav.tagline')}</span>
         </div>
       </div>
     </aside>

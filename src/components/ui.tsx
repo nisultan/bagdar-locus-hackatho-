@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { t, type Key } from '../i18n';
 import { BAND_LABELS } from '../engine/recommend';
 import type { Band, TaskCategory } from '../types';
 
@@ -114,9 +115,9 @@ export function EstimateNote({ children }: { children?: ReactNode }) {
   return (
     <span
       className="estimate-note"
-      title="Стоимость пересчитана в USD и округлена, дедлайн — из цикла приёма этого года. Точные цифры смотрите на сайте вуза."
+      title={t('ui.estimateHint')}
     >
-      <Icon name="info" size={14} /> {children ?? 'округлённый ориентир'}
+      <Icon name="info" size={14} /> {children ?? t('ui.estimate')}
     </span>
   );
 }
@@ -138,7 +139,7 @@ function domainOf(href: string) {
  */
 export function SourceLink({
   href,
-  label = 'Официальный сайт',
+  label,
   strong = false,
   checked = true,
 }: {
@@ -147,21 +148,22 @@ export function SourceLink({
   strong?: boolean;
   checked?: boolean;
 }) {
+  const text = label ?? t('ui.source');
   return (
     <a
       className={`source-btn${strong ? ' source-btn-strong' : ''}`}
       href={href}
       target="_blank"
       rel="noreferrer"
-      title={`Открыть первоисточник: ${href}`}
+      title={t('ui.sourceOpen', { url: href })}
     >
       <span className="source-btn-icon"><Icon name="link" size={14} /></span>
       <span className="source-btn-body">
-        <b>{label}</b>
+        <b>{text}</b>
         <span className="source-btn-host">{domainOf(href)}</span>
       </span>
       {checked && (
-        <span className="source-btn-badge" title={`Данные сверялись ${CHECKED_ON}`}>
+        <span className="source-btn-badge" title={t('ui.sourceChecked', { date: CHECKED_ON })}>
           <Icon name="check" size={11} /> {CHECKED_ON}
         </span>
       )}
@@ -170,12 +172,12 @@ export function SourceLink({
   );
 }
 
-export const CATEGORY_META: Record<TaskCategory, { label: string; icon: string }> = {
-  exam: { label: 'Экзамены', icon: 'exam' },
-  document: { label: 'Документы', icon: 'document' },
-  deadline: { label: 'Дедлайны', icon: 'deadline' },
-  academic: { label: 'Учёба', icon: 'academic' },
-  activity: { label: 'Активности', icon: 'activity' },
+export const CATEGORY_META: Record<TaskCategory, { label: Key; icon: string }> = {
+  exam: { label: 'cat.exam', icon: 'exam' },
+  document: { label: 'cat.document', icon: 'document' },
+  deadline: { label: 'cat.deadline', icon: 'deadline' },
+  academic: { label: 'cat.academic', icon: 'academic' },
+  activity: { label: 'cat.activity', icon: 'activity' },
 };
 
 export function PageHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {

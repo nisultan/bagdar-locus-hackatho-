@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { t } from '../i18n';
 import { Icon } from './ui';
 
 type Mode = 'light' | 'dark';
@@ -70,8 +71,8 @@ export function ThemeToggle() {
       type="button"
       className="theme-toggle"
       onClick={() => set(next)}
-      title={next === 'dark' ? 'Тёмная тема' : 'Светлая тема'}
-      aria-label={next === 'dark' ? 'Включить тёмную тему' : 'Включить светлую тему'}
+      title={next === 'dark' ? t('ui.themeDark') : t('ui.themeLight')}
+      aria-label={next === 'dark' ? t('ui.themeDarkOn') : t('ui.themeLightOn')}
     >
       <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
     </button>

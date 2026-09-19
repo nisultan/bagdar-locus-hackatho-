@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t as tr } from '../i18n';
 import { Button, CATEGORY_META, EstimateNote, Icon, Meter, PageHead, SourceLink } from '../components/ui';
 import { PROGRAMS } from '../data/programs';
 import { monthYear } from '../engine/format';
@@ -44,7 +45,7 @@ export function RoadmapScreen() {
         <button className={`filter${filter === 'all' ? ' on' : ''}`} onClick={() => setFilter('all')}>Все</button>
         {(Object.keys(CATEGORY_META) as TaskCategory[]).map((c) => (
           <button key={c} className={`filter${filter === c ? ' on' : ''}`} onClick={() => setFilter(c)}>
-            <Icon name={CATEGORY_META[c].icon} size={14} /> {CATEGORY_META[c].label}
+            <Icon name={CATEGORY_META[c].icon} size={14} /> {tr(CATEGORY_META[c].label)}
           </button>
         ))}
         <label className="toggle small">
@@ -93,7 +94,7 @@ export function TaskItem({ t, highlight }: { t: RoadmapTask; highlight?: boolean
       </label>
       <div className="task-body">
         <div className="task-top">
-          <span className={`cat cat-${t.category}`}><Icon name={CATEGORY_META[t.category].icon} size={14} /> {CATEGORY_META[t.category].label}</span>
+          <span className={`cat cat-${t.category}`}><Icon name={CATEGORY_META[t.category].icon} size={14} /> {tr(CATEGORY_META[t.category].label)}</span>
           {highlight && <span className="tag tag-accent">Следующий шаг</span>}
           {t.estimated && <EstimateNote>дата — ориентир</EstimateNote>}
         </div>

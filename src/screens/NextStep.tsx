@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n';
 import { Button, CATEGORY_META, EstimateNote, Icon, PageHead, SourceLink } from '../components/ui';
 import { monthYear, plural } from '../engine/format';
 import { go } from '../router';
@@ -20,7 +21,7 @@ export function NextStep() {
         {next ? (
           <section className="card next-hero">
             <div className="next-top">
-              <span className={`cat cat-${next.category}`}><Icon name={CATEGORY_META[next.category].icon} size={14} /> {CATEGORY_META[next.category].label}</span>
+              <span className={`cat cat-${next.category}`}><Icon name={CATEGORY_META[next.category].icon} size={14} /> {tr(CATEGORY_META[next.category].label)}</span>
               <span className="small">до: <b>{monthYear(next.due)}</b></span>
               {next.estimated && <EstimateNote>дата — ориентир</EstimateNote>}
             </div>

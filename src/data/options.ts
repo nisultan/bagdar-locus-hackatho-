@@ -1,14 +1,26 @@
+import { t, type Key } from '../i18n';
 import type { Achievements, CountryCode, EnglishLevel, Field, Grade, Priority, Profile } from '../types';
 
-export const FIELD_LABELS: Record<Field, string> = {
-  cs: 'IT и программирование',
-  engineering: 'Инженерия',
-  business: 'Бизнес и экономика',
-  medicine: 'Медицина',
-  science: 'Естественные науки',
-  social: 'Общество и международные отношения',
-  design: 'Дизайн и медиа',
-};
+/**
+ * Справочник, который читается как обычный объект (`FIELD_LABELS[f]`, `Object.keys(...)`),
+ * но значение берёт из словаря на текущем языке. Так сотни мест использования
+ * остались нетронутыми, а подписи переключаются вместе с языком.
+ */
+function localized<K extends string>(keys: Record<K, Key>): Record<K, string> {
+  return new Proxy(keys, {
+    get: (map, prop: string) => (prop in map ? t(map[prop as K]) : undefined),
+  }) as unknown as Record<K, string>;
+}
+
+export const FIELD_LABELS: Record<Field, string> = localized<Field>({
+  cs: 'field.cs',
+  engineering: 'field.engineering',
+  business: 'field.business',
+  medicine: 'field.medicine',
+  science: 'field.science',
+  social: 'field.social',
+  design: 'field.design',
+});
 
 export const FIELD_EMOJI: Record<Field, string> = {
   cs: '💻',
@@ -20,52 +32,52 @@ export const FIELD_EMOJI: Record<Field, string> = {
   design: '🎨',
 };
 
-export const COUNTRY_LABELS: Record<CountryCode, string> = {
-  KZ: 'Казахстан',
-  DE: 'Германия',
-  IT: 'Италия',
-  EE: 'Эстония',
-  HU: 'Венгрия',
-  TR: 'Турция',
-  KR: 'Южная Корея',
-  CZ: 'Чехия',
-  UK: 'Великобритания',
-  US: 'США',
-};
+export const COUNTRY_LABELS: Record<CountryCode, string> = localized<CountryCode>({
+  KZ: 'country.KZ',
+  DE: 'country.DE',
+  IT: 'country.IT',
+  EE: 'country.EE',
+  HU: 'country.HU',
+  TR: 'country.TR',
+  KR: 'country.KR',
+  CZ: 'country.CZ',
+  UK: 'country.UK',
+  US: 'country.US',
+});
 
 export const COUNTRY_FLAG: Record<CountryCode, string> = {
   KZ: '🇰🇿', DE: '🇩🇪', IT: '🇮🇹', EE: '🇪🇪', HU: '🇭🇺', TR: '🇹🇷', KR: '🇰🇷', CZ: '🇨🇿', UK: '🇬🇧', US: '🇺🇸',
 };
 
-export const GRADE_LABELS: Record<Grade, string> = {
-  '9': '9 класс',
-  '10': '10 класс',
-  '11': '11 класс',
-  graduate: 'Уже окончил(а) школу',
-};
+export const GRADE_LABELS: Record<Grade, string> = localized<Grade>({
+  '9': 'grade.9',
+  '10': 'grade.10',
+  '11': 'grade.11',
+  graduate: 'grade.graduate',
+});
 
-export const ENGLISH_LABELS: Record<EnglishLevel, string> = {
-  none: 'Почти не знаю',
-  A2: 'A2 — базовый',
-  B1: 'B1 — средний',
-  B2: 'B2 — уверенный',
-  C1: 'C1 — свободный',
-};
+export const ENGLISH_LABELS: Record<EnglishLevel, string> = localized<EnglishLevel>({
+  none: 'english.none',
+  A2: 'english.A2',
+  B1: 'english.B1',
+  B2: 'english.B2',
+  C1: 'english.C1',
+});
 
-export const ACHIEVEMENT_LABELS: Record<Achievements, string> = {
-  none: 'Пока нет',
-  school: 'Школьные олимпиады / проекты',
-  regional: 'Городской или областной уровень',
-  national: 'Республиканский уровень',
-  international: 'Международный уровень',
-};
+export const ACHIEVEMENT_LABELS: Record<Achievements, string> = localized<Achievements>({
+  none: 'ach.none',
+  school: 'ach.school',
+  regional: 'ach.regional',
+  national: 'ach.national',
+  international: 'ach.international',
+});
 
-export const PRIORITY_LABELS: Record<Priority, string> = {
-  cost: 'Минимальные расходы',
-  prestige: 'Сильный бренд университета',
-  english: 'Обучение на английском',
-  close: 'Учиться ближе к дому',
-};
+export const PRIORITY_LABELS: Record<Priority, string> = localized<Priority>({
+  cost: 'prio.cost',
+  prestige: 'prio.prestige',
+  english: 'prio.english',
+  close: 'prio.close',
+});
 
 /** Rough IELTS equivalent of a self-reported CEFR level (used only when no IELTS score). */
 export const ENGLISH_TO_IELTS: Record<EnglishLevel, number> = {

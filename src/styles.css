@@ -1058,3 +1058,29 @@ summary { transition: color 0.2s ease; cursor: pointer; }
   transition: background 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .route-loader-dots .is-on { background: var(--primary); transform: scale(1.25); }
+
+/* ============ Переключатель языка ============ */
+.lang-toggle {
+  display: inline-flex; align-items: center; gap: 2px; flex: none;
+  height: 34px; padding: 3px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
+  font-size: 13px; font-weight: 700; line-height: 1;
+  box-shadow: 0 2px 0 var(--line);
+  transition: border-color 0.2s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.lang-toggle:hover { border-color: var(--primary); }
+.lang-toggle:active { transform: translateY(2px); box-shadow: 0 0 0 var(--line); }
+.lang-toggle span { padding: 5px 9px; border-radius: 999px; transition: background 0.25s ease, color 0.25s ease; }
+.lang-toggle-on { background: var(--primary); color: var(--surface); }
+.lang-toggle-off { color: var(--muted); }
+:root[data-theme='dark'] .lang-toggle-on { color: #0c1512; }
+
+/* ============ Правовые страницы ============ */
+.legal { max-width: 760px; display: flex; flex-direction: column; gap: 26px; }
+.legal-head h1 { font-size: clamp(26px, 4vw, 36px); margin-bottom: 6px; }
+.legal-section { display: flex; flex-direction: column; gap: 10px; }
+.legal-section h2 { font-size: 19px; color: var(--primary); }
+.legal-section p { color: var(--ink-2); line-height: 1.6; }
+.footer-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.footer-links a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }
+.footer-links a:hover { color: var(--primary); border-color: var(--primary); }
