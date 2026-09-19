@@ -77,9 +77,9 @@ export default async function handler(req: any, res: any) {
             // запас нужен с большим отрывом: при нехватке ответ обрывается
             // на середине JSON, и разобрать его уже нельзя.
             maxOutputTokens: 2048,
-            // Задача простая и структурированная — глубокое рассуждение только
-            // съедает бюджет и задержку.
-            thinkingLevel: 'minimal',
+            // Глубину рассуждения не задаём: у Flash-моделей минимальная и так
+            // по умолчанию, а поле thinkingLevel этот эндпоинт не принимает
+            // (400 Unknown name) — проверено на живом деплое.
             temperature: 0.3,
             responseMimeType: 'application/json',
             responseSchema: RESPONSE_SCHEMA,
