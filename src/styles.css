@@ -1220,3 +1220,26 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 @media (min-width: 1080px) {
   .app-collapsed .sidebar-me { justify-content: center; }
 }
+
+/* ============ Шапка: защита от горизонтального скролла ============ */
+/* Логотип, чип «ближайший шаг» и две кнопки не помещались в 375px и
+   растягивали страницу. Теперь блоки умеют сжиматься, а чип с длинным
+   названием задачи прячется там, где он всё равно дублирует
+   мобильный степпер и отдельный экран «Следующий шаг». */
+.topbar { flex-wrap: nowrap; overflow: hidden; }
+.topbar > .logo { min-width: 0; flex-shrink: 1; }
+.topbar-tools { min-width: 0; flex-shrink: 1; }
+.topbar-next { min-width: 0; flex-shrink: 1; }
+.topbar-next-text { max-width: 100%; }
+.logo-word { flex-shrink: 1; min-width: 0; overflow: hidden; }
+
+@media (max-width: 640px) {
+  .topbar-next { display: none; }
+}
+
+/* Боковые появления на узких экранах едут вертикально: сдвиг в 26px больше,
+   чем поле в 16px, и на время анимации растягивал страницу вбок. */
+@media (max-width: 860px) {
+  .reveal-left,
+  .reveal-right { transform: translateY(26px); }
+}
