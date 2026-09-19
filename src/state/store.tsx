@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { getSession, subscribeSession, type Session } from '../auth';
+import { cancelPendingSave, debounceSave, loadRemote, saveRemote } from './sync';
 import { diagnose, type Diagnosis } from '../engine/diagnose';
 import { useLang } from '../i18n/useLang';
 import { leversFor } from '../engine/leverage';
@@ -11,6 +13,8 @@ import type { Profile, RoadmapTask } from '../types';
 const KEY = 'bagdar:v1';
 /** Ключ до переименования продукта: читаем один раз, чтобы не обнулить начатый маршрут. */
 const LEGACY_KEY = 'unipath:v1';
+/** Время последней локальной правки — по нему решаем, чья версия свежее при входе. */
+const TS_KEY = 'bagdar:v1:updatedAt';
 
 export interface Change {
   added: string[];
@@ -52,6 +56,7 @@ type Action =
   | { type: 'dismissChange' }
   | { type: 'previewLever'; id: string | null }
   | { type: 'applyLever'; id: string }
+  | { type: 'hydrate'; state: State }
   | { type: 'reset' };
 
 const topIds = (p: Profile) => recommend(p).top.map((r) => r.program.id);
@@ -103,6 +108,16 @@ function reducer(s: State, a: Action): State {
       if (!lever) return { ...s, preview: null };
       return reducer({ ...s, preview: null }, { type: 'saveProfile', profile: lever.apply(s.profile) });
     }
+    // Состояние из облака: подмешиваем к INITIAL, чтобы старая запись без новых
+    // полей не сломала экраны.
+    case 'hydrate':
+      return {
+        ...INITIAL,
+        ...a.state,
+        profile: { ...EMPTY_PROFILE, ...a.state.profile },
+        change: null,
+        preview: null,
+      };
     case 'reset':
       return INITIAL;
   }
@@ -117,6 +132,19 @@ function load(): State {
     return { ...INITIAL, ...parsed, profile: { ...EMPTY_PROFILE, ...parsed.profile }, change: null, preview: null };
   } catch {
     return INITIAL;
+  }
+}
+
+/** Что уходит в облако: примерка рычага и баннер изменений — состояние экрана, не маршрут. */
+function persistable(s: State): State {
+  return { ...s, change: null, preview: null };
+}
+
+function localUpdatedAt(): number {
+  try {
+    return Number(localStorage.getItem(TS_KEY)) || 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -148,10 +176,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
+      localStorage.setItem(TS_KEY, String(Date.now()));
     } catch {
       /* storage unavailable (private mode) — app keeps working in memory */
     }
   }, [state]);
+
+  // ---------- синхронизация с облаком ----------
+  const [session, setSession] = useState<Session | null>(getSession);
+  useEffect(() => {
+    const off = subscribeSession(setSession);
+    return () => { off(); };
+  }, []);
+
+  // Свежее состояние нужно обработчику входа, но перезапускать его на каждый
+  // клик нельзя — держим в ref.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const userId = session?.userId ?? null;
+
+  useEffect(() => {
+    if (!userId) {
+      cancelPendingSave();
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const remote = await loadRemote<State>(userId);
+      if (cancelled || remote === undefined) return; // облако недоступно — работаем локально
+      const local = stateRef.current;
+      if (remote === null) {
+        if (local.profileDone) void saveRemote(userId, persistable(local));
+        return;
+      }
+      const remoteIsNewer = remote.updatedAt > localUpdatedAt();
+      if (!local.profileDone || remoteIsNewer) dispatch({ type: 'hydrate', state: remote.state });
+      else void saveRemote(userId, persistable(local));
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || !state.profileDone) return;
+    debounceSave(userId, persistable(state));
+  }, [userId, state]);
 
   const derived = useMemo<Derived>(() => {
     // Примерка влияет только на список рекомендаций: план и прогресс остаются

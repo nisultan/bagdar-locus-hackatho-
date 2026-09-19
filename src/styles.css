@@ -1359,3 +1359,19 @@ summary { transition: color 0.2s ease; cursor: pointer; }
 .auth-notice { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; color: var(--good); background: var(--good-50); padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; }
 .auth-notice svg { flex: none; margin-top: 2px; }
 .auth-forgot { text-align: center; margin-top: 10px; }
+
+.sync-badge { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.sync-badge.muted { color: var(--muted); }
+
+/* ============ AI-разбор блоками ============ */
+.advice-verdict { font-size: 16px; font-weight: 600; line-height: 1.4; }
+.advice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.advice-block { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; }
+.advice-block h3 { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.advice-block ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.advice-plus h3 { color: var(--good); }
+.advice-do h3 { color: var(--primary); }
+.advice-line { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.advice-line svg { flex: none; margin-top: 3px; }
+.advice-watch { color: var(--warn); }
+.advice-check { color: var(--ink-2); }

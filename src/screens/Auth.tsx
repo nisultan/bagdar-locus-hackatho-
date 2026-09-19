@@ -5,6 +5,7 @@ import {
   type AuthError, type Session,
 } from '../auth';
 import { Button, Icon, Meter, PageHead } from '../components/ui';
+import { getSyncStatus, subscribeSync, type SyncStatus } from '../state/sync';
 import { t } from '../i18n';
 import { go } from '../router';
 
@@ -98,6 +99,7 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
             </span>
           </p>
           <p className="small muted">{t(cloud ? 'auth.cloudNote' : 'auth.localNote')}</p>
+          {cloud && <SyncBadge />}
           <div className="auth-actions">
             <Button iconRight="arrow" onClick={() => go('recs')}>{t('auth.toRoute')}</Button>
             <Button variant="ghost" icon="refresh" onClick={async () => { await signOut(); setSession(null); }}>
@@ -212,5 +214,22 @@ export function Auth({ mode: initial = 'signin' }: { mode?: Mode }) {
         {t('auth.skipNote')} <button className="link-btn" onClick={() => go('profile')}>{t('auth.skip')}</button>
       </p>
     </div>
+  );
+}
+
+/** Состояние синхронизации маршрута с облаком — чтобы не гадать, сохранилось ли. */
+function SyncBadge() {
+  const [status, setStatus] = useState<SyncStatus>(getSyncStatus);
+  useEffect(() => {
+    const off = subscribeSync(setStatus);
+    return () => { off(); };
+  }, []);
+  if (status === 'off') return null;
+  const tone = status === 'error' ? 'bad' : status === 'saved' ? 'ok' : 'muted';
+  const icon = status === 'error' ? 'warn' : status === 'saved' ? 'check' : 'refresh';
+  return (
+    <p className={`small sync-badge ${tone}`}>
+      <Icon name={icon} size={14} /> {t(`sync.${status}` as 'sync.idle')}
+    </p>
   );
 }

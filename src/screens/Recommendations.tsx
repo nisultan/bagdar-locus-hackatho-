@@ -216,7 +216,29 @@ function RecCard({ r, rank, unlocked = false }: { r: Recommendation; rank: numbe
                 <p className="eyebrow">
                   <Icon name="spark" size={14} /> {advice.source === 'ai' ? t('rc.aiBadge') : t('rc.rulesBadge')}
                 </p>
-                {advice.text.split('\n\n').map((t) => <p key={t}>{t}</p>)}
+                <p className="advice-verdict">{advice.advice.verdict}</p>
+
+                <div className="advice-grid">
+                  {advice.advice.strengths.length > 0 && (
+                    <section className="advice-block advice-plus">
+                      <h3><Icon name="check" size={14} /> {t('ai.strengths')}</h3>
+                      <ul>{advice.advice.strengths.map((x) => <li key={x}>{x}</li>)}</ul>
+                    </section>
+                  )}
+                  {advice.advice.actions.length > 0 && (
+                    <section className="advice-block advice-do">
+                      <h3><Icon name="flag" size={14} /> {t('ai.actions')}</h3>
+                      <ul>{advice.advice.actions.map((x) => <li key={x}>{x}</li>)}</ul>
+                    </section>
+                  )}
+                </div>
+
+                {advice.advice.watch && (
+                  <p className="advice-line advice-watch"><Icon name="warn" size={14} /> <span><b>{t('ai.watch')}</b> {advice.advice.watch}</span></p>
+                )}
+                {advice.advice.check && (
+                  <p className="advice-line advice-check"><Icon name="info" size={14} /> <span><b>{t('ai.check')}</b> {advice.advice.check}</span></p>
+                )}
               </div>
             )}
           </div>

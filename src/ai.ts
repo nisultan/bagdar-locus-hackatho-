@@ -1,24 +1,43 @@
 import { FIELD_LABELS, COUNTRY_LABELS } from './data/options';
 import { BAND_LABELS } from './engine/recommend';
-import { getLang } from './i18n';
+import { getLang, t } from './i18n';
 import type { Profile, Recommendation } from './types';
 
+/**
+ * Разбор рекомендации. Всегда одна и та же структура — и от модели, и от правил:
+ * интерфейс рисует её блоками, поэтому длинный текст просто некуда девать.
+ */
+export interface Advice {
+  verdict: string;
+  strengths: string[];
+  actions: string[];
+  watch: string;
+  check: string;
+}
+
 export interface AdviceResult {
-  text: string;
+  advice: Advice;
   source: 'ai' | 'rules';
 }
 
-/** Rule-based advice — always available, used as fallback when the AI endpoint is not configured. */
-export function localAdvice(p: Profile, r: Recommendation): string {
-  const plus = r.reasons.filter((x) => x.kind === 'plus').map((x) => x.text.replace(/\.$/, '').toLowerCase());
-  const lines = [
-    `${r.program.university} — ${BAND_LABELS[r.band].title.toLowerCase()} вариант для вас (совпадение ${r.score}/100).`,
-    plus.length ? `Главное в пользу: ${plus.slice(0, 3).join('; ')}.` : '',
-    r.gaps.length ? `Чтобы усилить заявку: ${r.gaps.slice(0, 3).join('; ').toLowerCase()}.` : 'Серьёзных пробелов по требованиям не видно — сосредоточьтесь на качестве документов.',
-    `Проверьте актуальные условия на официальном сайте: ${r.program.sourceUrl}`,
-  ];
-  if (p.interests.length > 1) lines.splice(2, 0, `Программа покрывает направления: ${r.program.fields.map((f) => FIELD_LABELS[f]).join(', ')}.`);
-  return lines.filter(Boolean).join('\n\n');
+const trim = (s: string) => s.replace(/\s+/g, ' ').replace(/\.$/, '').trim();
+
+/** Разбор по правилам: доступен всегда, работает и без ключа, и при сбое сети. */
+export function localAdvice(p: Profile, r: Recommendation): Advice {
+  const plus = r.reasons.filter((x) => x.kind === 'plus').map((x) => trim(x.text));
+  const minus = r.reasons.filter((x) => x.kind === 'minus').map((x) => trim(x.text));
+
+  return {
+    verdict: t('ai.localVerdict', {
+      university: r.program.university,
+      band: BAND_LABELS[r.band].title.toLowerCase(),
+      score: r.score,
+    }),
+    strengths: plus.slice(0, 3),
+    actions: r.gaps.length ? r.gaps.slice(0, 3) : [t('ai.localNoGaps')],
+    watch: minus[0] ?? (p.needGrant && r.program.grant === 'none' ? t('ai.localNoGrant') : ''),
+    check: t('ai.localCheck', { entrance: trim(r.program.entrance) }),
+  };
 }
 
 export async function fetchAdvice(p: Profile, r: Recommendation): Promise<AdviceResult> {
@@ -49,6 +68,7 @@ export async function fetchAdvice(p: Profile, r: Recommendation): Promise<Advice
       grantNote: r.program.grantNote,
     },
   };
+
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 20000);
@@ -60,10 +80,20 @@ export async function fetchAdvice(p: Profile, r: Recommendation): Promise<Advice
     });
     clearTimeout(timer);
     if (!res.ok) throw new Error(String(res.status));
-    const data = (await res.json()) as { text?: string };
-    if (!data.text) throw new Error('empty');
-    return { text: data.text, source: 'ai' };
+    const data = (await res.json()) as { advice?: Partial<Advice> };
+    const a = data.advice;
+    if (!a?.verdict) throw new Error('empty');
+    return {
+      source: 'ai',
+      advice: {
+        verdict: a.verdict,
+        strengths: (a.strengths ?? []).slice(0, 3),
+        actions: (a.actions ?? []).slice(0, 3),
+        watch: a.watch ?? '',
+        check: a.check ?? '',
+      },
+    };
   } catch {
-    return { text: localAdvice(p, r), source: 'rules' };
+    return { advice: localAdvice(p, r), source: 'rules' };
   }
 }
