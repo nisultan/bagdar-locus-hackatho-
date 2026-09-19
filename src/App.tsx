@@ -153,7 +153,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p><b>{t('app.footerName')}</b> {t('app.footer', { year: new Date().getFullYear() })}</p>
+        <p>{t('app.footer', { year: new Date().getFullYear() })}</p>
         <p className="footer-links">
           <a href="#/privacy">{t('app.privacy')}</a>
           <a href="#/terms">{t('app.terms')}</a>
